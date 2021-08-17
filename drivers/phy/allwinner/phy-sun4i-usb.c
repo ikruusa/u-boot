@@ -87,8 +87,6 @@ struct sun4i_usb_phy_cfg {
 
 struct sun4i_usb_phy_plat {
 	void __iomem *pmu;
-	struct gpio_desc gpio_vbus_det;
-	struct gpio_desc gpio_id_det;
 	struct clk clocks;
 	struct clk clk2;
 	struct reset_ctl resets;
@@ -100,6 +98,8 @@ struct sun4i_usb_phy_data {
 	void __iomem *base;
 	const struct sun4i_usb_phy_cfg *cfg;
 	struct sun4i_usb_phy_plat *usb_phy;
+	struct gpio_desc id_det_gpio;
+	struct gpio_desc vbus_det_gpio;
 	struct udevice *vbus_power_supply;
 };
 
@@ -393,11 +393,10 @@ static int sun4i_usb_phy_xlate(struct phy *phy,
 int sun4i_usb_phy_vbus_detect(struct phy *phy)
 {
 	struct sun4i_usb_phy_data *data = dev_get_priv(phy->dev);
-	struct sun4i_usb_phy_plat *usb_phy = &data->usb_phy[phy->id];
 	int err = 1, retries = 3;
 
-	if (dm_gpio_is_valid(&usb_phy->gpio_vbus_det)) {
-		err = dm_gpio_get_value(&usb_phy->gpio_vbus_det);
+	if (dm_gpio_is_valid(&data->vbus_det_gpio)) {
+		err = dm_gpio_get_value(&data->vbus_det_gpio);
 		/*
 		 * Vbus may have been provided by the board and just turned off
 		 * some milliseconds ago on reset. What we're measuring then is
@@ -405,7 +404,7 @@ int sun4i_usb_phy_vbus_detect(struct phy *phy)
 		 */
 		while (err > 0 && retries--) {
 			mdelay(100);
-			err = dm_gpio_get_value(&usb_phy->gpio_vbus_det);
+			err = dm_gpio_get_value(&data->vbus_det_gpio);
 		}
 	} else if (data->vbus_power_supply) {
 		err = regulator_get_enable(data->vbus_power_supply);
@@ -417,12 +416,11 @@ int sun4i_usb_phy_vbus_detect(struct phy *phy)
 int sun4i_usb_phy_id_detect(struct phy *phy)
 {
 	struct sun4i_usb_phy_data *data = dev_get_priv(phy->dev);
-	struct sun4i_usb_phy_plat *usb_phy = &data->usb_phy[phy->id];
 
-	if (!dm_gpio_is_valid(&usb_phy->gpio_id_det))
-		return -1;
+	if (!dm_gpio_is_valid(&data->id_det_gpio))
+		return -EOPNOTSUPP;
 
-	return dm_gpio_get_value(&usb_phy->gpio_id_det);
+	return dm_gpio_get_value(&data->id_det_gpio);
 }
 
 void sun4i_usb_phy_set_squelch_detect(struct phy *phy, bool enabled)
@@ -452,6 +450,12 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 	if (!data->base)
 		return -EINVAL;
 
+	gpio_request_by_name(dev, "usb0_id_det-gpios", 0, &data->id_det_gpio,
+			     GPIOD_IS_IN | GPIOD_PULL_UP);
+
+	gpio_request_by_name(dev, "usb0_vbus_det-gpios", 0, &data->vbus_det_gpio,
+			     GPIOD_IS_IN);
+
 	device_get_supply_regulator(dev, "usb0_vbus_power-supply",
 				    &data->vbus_power_supply);
 
@@ -469,28 +473,6 @@ static int sun4i_usb_phy_probe(struct udevice *dev)
 			ret = regulator_set_enable_if_allowed(phy->vbus, false);
 			if (ret)
 				return ret;
-		}
-
-		if (i == 0) {
-			ret = gpio_request_by_name(dev, "usb0_vbus_det-gpios",
-						   0, &phy->gpio_vbus_det,
-						   GPIOD_IS_IN);
-			if (ret && ret != -ENOENT) {
-				dev_err(dev,
-					"failed to get VBUS detect GPIO: %d\n",
-					ret);
-				return ret;
-			}
-
-			ret = gpio_request_by_name(dev, "usb0_id_det-gpios", 0,
-						   &phy->gpio_id_det,
-						   GPIOD_IS_IN | GPIOD_PULL_UP);
-			if (ret && ret != -ENOENT) {
-				dev_err(dev,
-					"failed to get ID detect GPIO: %d\n",
-					ret);
-				return ret;
-			}
 		}
 
 		if (data->cfg->dedicated_clocks)
