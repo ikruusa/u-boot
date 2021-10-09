@@ -10,6 +10,7 @@
 #include <common.h>
 #include <asm/cache.h>
 
+#include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
 #include <asm/armv7.h>
 #include <asm/gic.h>
@@ -31,7 +32,9 @@
 #define SUNXI_CPU_RST(cpu)			(0x40 + (cpu) * 0x40 + 0x0)
 #define SUNXI_CPU_STATUS(cpu)			(0x40 + (cpu) * 0x40 + 0x8)
 #define SUNXI_GEN_CTRL				(0x184)
+#define SUNXI_SUPER_STANDBY_FLAG		(0x1a0)
 #define SUNXI_PRIV0				(0x1a4)
+#define SUNXI_PRIV1				(0x1a8)
 #define SUN7I_CPU1_PWR_CLAMP			(0x1b0)
 #define SUN7I_CPU1_PWROFF			(0x1b4)
 #define SUNXI_DBG_CTRL1				(0x1e4)
@@ -138,6 +141,13 @@ static void __secure sunxi_cpu_set_entry(int __always_unused cpu, void *entry)
 		       SUNXI_R_CPUCFG_BASE + SUN8I_R528_SOFT_ENTRY);
 	} else {
 		writel((u32)entry, SUNXI_CPUCFG_BASE + SUNXI_PRIV0);
+	}
+
+	if (CONFIG_SUNXI_RESUME_BASE) {
+		/* Redirect CPU 0 to the secure monitor via the resume shim. */
+		writel(0x16aaefe8, SUNXI_R_CPUCFG_BASE + SUNXI_SUPER_STANDBY_FLAG);
+		writel(0xaa16efe8, SUNXI_R_CPUCFG_BASE + SUNXI_SUPER_STANDBY_FLAG);
+		writel(CONFIG_SUNXI_RESUME_BASE, SUNXI_R_CPUCFG_BASE + SUNXI_PRIV1);
 	}
 }
 
@@ -307,7 +317,9 @@ out:
 int __secure psci_cpu_on(u32 __always_unused unused, u32 mpidr, u32 pc,
 			 u32 context_id)
 {
+	struct sunxi_ccm_reg *ccu = (struct sunxi_ccm_reg *)SUNXI_CCM_BASE;
 	u32 cpu = (mpidr & 0x3);
+	u32 bus_clk, cpu_clk;
 
 	/* store target PC and context id */
 	psci_save(cpu, pc, context_id);
@@ -324,11 +336,31 @@ int __secure psci_cpu_on(u32 __always_unused unused, u32 mpidr, u32 pc,
 	/* Lock CPU (Disable external debug access) */
 	sunxi_cpu_set_locking(cpu, true);
 
+	if (IS_ENABLED(CONFIG_MACH_SUN8I_H3) && cpu == 0) {
+		/* Save registers that will be clobbered by the BROM. */
+		cpu_clk = readl(&ccu->cpu_axi_cfg);
+		bus_clk = readl(&ccu->ahb1_apb1_div);
+
+		/* Bypass PLL_PERIPH0 so AHB1 frequency does not spike. */
+		setbits_le32(&ccu->pll6_cfg, BIT(25));
+	}
+
 	/* Power up target CPU */
 	sunxi_cpu_set_power(cpu, true);
 
 	/* De-assert reset on target CPU */
 	sunxi_cpu_set_reset(cpu, false);
+
+	if (IS_ENABLED(CONFIG_MACH_SUN8I_H3) && cpu == 0) {
+		/* Spin until the BROM has clobbered the clock registers. */
+		while (readl(&ccu->ahb1_apb1_div) != 0x00001100);
+
+		/* Restore the registers and turn off PLL_PERIPH0 bypass. */
+		writel(cpu_clk, &ccu->cpu_axi_cfg);
+		writel(bus_clk, &ccu->ahb1_apb1_div);
+
+		clrbits_le32(&ccu->pll6_cfg, BIT(25));
+	}
 
 	/* Unlock CPU (Reenable external debug access) */
 	sunxi_cpu_set_locking(cpu, false);

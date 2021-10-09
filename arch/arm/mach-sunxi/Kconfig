@@ -164,6 +164,13 @@ config SUNXI_BL31_BASE
 	help
 	  Address where BL31 (TF-A) is loaded, or zero if BL31 is not used.
 
+config SUNXI_RESUME_BASE
+	hex
+	default 0x00047c00 if MACH_SUN8I_H3
+	default 0x0
+	help
+	  Address where the resume shim is loaded, or zero if it is not used.
+
 config SUNXI_SCP_BASE
 	hex
 	default 0x00050000 if MACH_SUN50I || MACH_SUN50I_H5

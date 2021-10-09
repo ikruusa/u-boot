@@ -77,6 +77,20 @@
 				};
 #endif
 
+#if CONFIG_SUNXI_RESUME_BASE
+				resume {
+					description = "Super Standby resume image";
+					type = "standalone";
+					arch = ARCH;
+					compression = "none";
+					load = <CONFIG_SUNXI_RESUME_BASE>;
+
+					blob-ext {
+						filename = "u-boot-resume.img";
+					};
+				};
+#endif
+
 #if CONFIG_SUNXI_SCP_BASE
 				scp {
 					description = "SCP firmware";
@@ -109,11 +123,14 @@
 #else
 					firmware = "uboot";
 #endif
-#if CONFIG_SUNXI_SCP_BASE
-					loadables = "scp", "uboot";
-#else
-					loadables = "uboot";
+					loadables =
+#if CONFIG_SUNXI_RESUME_BASE
+						    "resume",
 #endif
+#if CONFIG_SUNXI_SCP_BASE
+						    "scp",
+#endif
+						    "uboot";
 					fdt = "fdt-SEQ";
 				};
 			};
