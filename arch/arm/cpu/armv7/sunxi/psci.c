@@ -65,6 +65,15 @@
 #define SUNXI_R_CPUCFG_BASE			0
 #endif
 
+static inline u32 __secure cp15_read_mpidr(void)
+{
+	u32 val;
+
+	asm volatile ("mrc p15, 0, %0, c0, c0, 5" : "=r" (val));
+
+	return val;
+}
+
 static void __secure cp15_write_cntp_tval(u32 tval)
 {
 	asm volatile ("mcr p15, 0, %0, c14, c2, 0" : : "r" (tval));
@@ -331,9 +340,14 @@ s32 __secure psci_cpu_off(void)
 {
 	psci_cpu_off_common();
 
-	/* Ask CPU0 via SGI15 to pull the rug... */
-	writel(BIT(16) | 15, GICD_BASE + GICD_SGIR);
-	dsb();
+	if (cp15_read_mpidr() & 3) {
+		/* Ask CPU0 via SGI15 to pull the rug... */
+		writel(BIT(16) | 15, GICD_BASE + GICD_SGIR);
+		dsb();
+	} else {
+		/* Unmask FIQs to service SGI15. */
+		asm volatile ("cpsie f");
+	}
 
 	/* Wait to be turned off */
 	while (1)
