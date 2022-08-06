@@ -114,7 +114,7 @@ config SPL_PAD_TO
 config SPL_HAS_BSS_LINKER_SECTION
 	depends on SPL_FRAMEWORK
 	bool "Use a specific address for the BSS via the linker script"
-	default y if ARCH_SUNXI || ARCH_MX6 || ARCH_OMAP2PLUS || MIPS || RISCV || ARCH_ZYNQMP || ARCH_SC5XX
+	default y if ARCH_MX6 || ARCH_OMAP2PLUS || BOARD_SUNXI || MIPS || RISCV || ARCH_ZYNQMP || ARCH_SC5XX
 
 config SPL_BSS_START_ADDR
 	hex "Link address for the BSS within the SPL binary"
@@ -391,7 +391,7 @@ config SPL_SYS_MALLOC_SIMPLE
 config SPL_SHARES_INIT_SP_ADDR
 	bool "SPL and U-Boot use the same initial stack pointer location"
 	depends on (ARM || ARCH_JZ47XX || MICROBLAZE || RISCV) && SPL_FRAMEWORK
-	default n if ARCH_SUNXI || ARCH_MX6 || ARCH_MX7 || ARCH_SC5XX
+	default n if ARCH_MX6 || ARCH_MX7 || ARCH_SC5XX || BOARD_SUNXI 
 	default y
 	help
 	  In many cases, we can use the same initial stack pointer address for
@@ -537,10 +537,10 @@ config SPL_DISPLAY_PRINT
 config SPL_SYS_MMCSD_RAW_MODE
 	bool "Use raw reads to locate the next boot phase"
 	depends on SPL_DM_MMC || SPL_MMC
-	default y if ARCH_SUNXI || ARCH_DAVINCI || ARCH_UNIPHIER || \
+	default y if ARCH_DAVINCI || ARCH_UNIPHIER || \
 		     ARCH_MX6 || ARCH_MX7 || \
 		     ARCH_ROCKCHIP || ARCH_MVEBU ||  ARCH_SOCFPGA || \
-		     ARCH_AT91 || ARCH_ZYNQ || ARCH_KEYSTONE || OMAP34XX || \
+		     ARCH_AT91 || ARCH_ZYNQ || ARCH_KEYSTONE || BOARD_SUNXI || OMAP34XX || \
 		     OMAP54XX || AM33XX || AM43XX || \
 		     TARGET_SIFIVE_UNLEASHED || TARGET_SIFIVE_UNMATCHED
 	help
@@ -578,7 +578,7 @@ endchoice
 config SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
 	hex "Address on the MMC to load U-Boot from"
 	depends on SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
-	default 0x40 if ARCH_SUNXI
+	default 0x40 if BOARD_SUNXI
 	default 0x75 if ARCH_DAVINCI
 	default 0x8a if ARCH_MX6 || ARCH_MX7
 	default 0x100 if ARCH_UNIPHIER
@@ -595,7 +595,7 @@ config SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
 config SYS_MMCSD_RAW_MODE_U_BOOT_DATA_PART_OFFSET
 	hex "U-Boot main hardware partition image offset"
 	depends on SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
-	default 0x10 if ARCH_SUNXI
+	default 0x10 if BOARD_SUNXI
 	default 0x0
 	help
 	  On some platforms SPL location depends on hardware partition. The ROM
@@ -1472,7 +1472,7 @@ endif # SPL_SPI_FLASH_SUPPORT
 
 config SYS_SPI_U_BOOT_OFFS
 	hex "address of u-boot payload in SPI flash"
-	default 0x8000 if ARCH_SUNXI
+	default 0x8000 if BOARD_SUNXI
 	default 0x0
 	depends on SPL_SPI_LOAD || SPL_SPI_SUNXI
 	help
