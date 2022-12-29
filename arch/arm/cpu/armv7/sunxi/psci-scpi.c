@@ -121,6 +121,44 @@ static inline u32 __secure read_mpidr(void)
 	return val;
 }
 
+static void __secure cp15_write_cntp_tval(u32 tval)
+{
+	asm volatile ("mcr p15, 0, %0, c14, c2, 0" : : "r" (tval));
+}
+
+static void __secure cp15_write_cntp_ctl(u32 val)
+{
+	asm volatile ("mcr p15, 0, %0, c14, c2, 1" : : "r" (val));
+}
+
+static u32 __secure cp15_read_cntp_ctl(void)
+{
+	u32 val;
+
+	asm volatile ("mrc p15, 0, %0, c14, c2, 1" : "=r" (val));
+
+	return val;
+}
+
+#define ONE_US (CONFIG_COUNTER_FREQUENCY / 1000000)
+
+static void __secure mdfs_udelay(u32 us)
+{
+	u32 reg = ONE_US * us;
+
+	cp15_write_cntp_tval(reg);
+	isb();
+	cp15_write_cntp_ctl(3);
+
+	do {
+		isb();
+		reg = cp15_read_cntp_ctl();
+	} while (!(reg & BIT(2)));
+
+	cp15_write_cntp_ctl(0);
+	isb();
+}
+
 static void __secure scpi_begin_command(void)
 {
 	u32 mpidr = read_mpidr();
@@ -379,6 +417,97 @@ s32 __secure psci_system_reset2(u32 __always_unused function_id,
 
 	/* Wait to be turned off. */
 	for (;;) wfi();
+}
+
+#define MCTL_COM_BASE               ((void *)(0x1c62000))
+#define MCTL_CTL_BASE               ((void *)(0x1c63000))
+
+#define _CCM_PLL_DDR_REG            (CCM_PLL_BASE  +  0x20)
+#define MC_WORK_MODE                (MCTL_COM_BASE +  0x00)
+#define PIR                         (MCTL_CTL_BASE +  0x00)
+#define PWRCTL                      (MCTL_CTL_BASE +  0x04)
+#define PGSR0                       (MCTL_CTL_BASE +  0x10)
+#define STATR                       (MCTL_CTL_BASE +  0x18)
+#define DTCR                        (MCTL_CTL_BASE +  0xc0)
+#define ODTMAP                      (MCTL_CTL_BASE + 0x120)
+#define DXnGCR0(x)                  (MCTL_CTL_BASE + 0x344 + 0x80*(x))
+
+s32 __secure sunxi_dram_dvfs_req(u32 __always_unused function_id,
+				 u32 freq, u32 flags)
+{
+	u32 rank_num, reg_val;
+	unsigned int i = 0;
+
+	rank_num = readl(MC_WORK_MODE) & 0x1;
+
+	/* 1. enter self-refresh and disable all master access */
+	reg_val = readl(PWRCTL);
+	reg_val |= (0x1<<0);
+	reg_val |= (0x1<<8);
+	writel(reg_val, PWRCTL);
+	mdfs_udelay(1);
+
+	/* make sure enter self-refresh */
+	while ((readl(STATR) & 0x7) != 0x3)
+		;
+
+	/* 2.Update PLL setting and wait 1ms */
+	reg_val = readl(SUNXI_CCM_BASE + 0x20);
+	reg_val |= (1U << 20);
+	writel(reg_val, SUNXI_CCM_BASE + 0x20);
+	mdfs_udelay(1000);
+
+	/* 3.set PIR register issue phy reset and DDL calibration */
+	if (rank_num) {
+		reg_val = readl(DTCR);
+		reg_val &= ~(0x3<<24);
+		reg_val |= (0x3<<24);
+		writel(reg_val, DTCR);
+	} else {
+		reg_val = readl(DTCR);
+		reg_val &= ~(0x3<<24);
+		reg_val |= (0x1<<24);
+		writel(reg_val, DTCR);
+	}
+
+	/* trigger phy reset and DDL calibration */
+	writel(0x40000061, PIR);
+	/* add 1us delay here */
+	mdfs_udelay(1);
+
+	/* wait for DLL Lock */
+	while ((readl(PGSR0) & 0x1) != 0x1)
+		;
+
+	/*4.setting ODT configure */
+	if (!(flags & BIT(0))) {
+		/* turn off DRAMC ODT */
+		for (i = 0; i < 4; i++) {
+			reg_val = readl(DXnGCR0(i));
+			reg_val &= ~(0x3U<<4);
+			reg_val |= (0x2<<4);
+			writel(reg_val, DXnGCR0(i));
+		}
+	} else {
+		/* turn on DRAMC dynamic ODT */
+		for (i = 0; i < 4; i++) {
+			reg_val = readl(DXnGCR0(i));
+			reg_val &= ~(0x3U<<4);
+			writel(reg_val, DXnGCR0(i));
+		}
+	}
+
+	/* 5.exit self-refresh and enable all master access */
+	reg_val = readl(PWRCTL);
+	reg_val &= ~(0x1<<0);
+	reg_val &= ~(0x1<<8);
+	writel(reg_val, PWRCTL);
+	mdfs_udelay(1);
+
+	/* make sure exit self-refresh */
+	while ((readl(STATR) & 0x7) != 0x1)
+		;
+	return 0;
 }
 
 /*
