@@ -13,11 +13,11 @@
  */
 
 #ifndef CONFIG_DRAM_CLK
-#define CONFIG_DRAM_CLK 792
+#define CONFIG_DRAM_CLK 528
 #endif
 
 #ifndef CONFIG_DRAM_ZQ
-#define CONFIG_DRAM_ZQ 0x007b7bfb
+#define CONFIG_DRAM_ZQ 0x08092665
 #endif
 
 #define readl rv_readl
