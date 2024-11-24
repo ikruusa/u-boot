@@ -156,3 +156,7 @@
 	pinctrl-names = "default";
 	status = "okay";
 };
+
+&gpadc {
+	status = "okay";
+};
