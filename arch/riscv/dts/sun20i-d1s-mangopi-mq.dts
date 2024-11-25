@@ -157,6 +157,17 @@
 	status = "okay";
 };
 
+
 &gpadc {
-	status = "okay";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        status = "okay";
+        channel@0 {
+                reg = <0>;
+        };
+};
+
+&can0 {
+        pinctrl-0 = <&can0_pins>;
+        status = "okay";
 };
