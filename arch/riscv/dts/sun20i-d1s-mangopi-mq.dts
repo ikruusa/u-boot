@@ -167,7 +167,7 @@
         };
 };
 
-&can0 {
-        pinctrl-0 = <&can0_pins>;
+&can1 {
+        pinctrl-0 = <&can1_pins>;
         status = "okay";
 };
