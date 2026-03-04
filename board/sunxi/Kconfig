@@ -101,7 +101,7 @@ config SYS_SOC
 	default "sunxi"
 
 config SUNXI_MINIMUM_DRAM_MB
-	int "minimum DRAM size"
+	int
 	default 32 if MACH_SUNIV
 	default 64 if MACH_SUN8I_V3S
 	default 256
