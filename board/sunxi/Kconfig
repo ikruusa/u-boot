@@ -110,6 +110,14 @@ config SPL_TEXT_BASE
 	default 0x20060 if SUN50I_GEN_H6 || SUNXI_GEN_NCAT2
 	default 0x00060
 
+config SUNXI_GEN_NCAT2
+	bool
+	select MMC_SUNXI_HAS_NEW_MODE
+	select SUPPORT_SPL
+	---help---
+	Select this for sunxi SoCs which have D1 like peripherals, clocks
+	and memory map.
+
 config SUNXI_MINIMUM_DRAM_MB
 	int
 	default 32 if MACH_SUNIV
