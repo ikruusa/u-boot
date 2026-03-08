@@ -76,10 +76,10 @@ config SUNXI_SRAM_ADDRESS
 	default 0x20000 if SUN50I_GEN_H6 || SUNXI_GEN_NCAT2
 	default 0x0
 	help
-	Older Allwinner SoCs have their mask boot ROM mapped just below 4GB,
-	with the first SRAM region being located at address 0.
-	Some newer SoCs map the boot ROM at address 0 instead and move the
-	SRAM to a different address.
+	  Older Allwinner SoCs have their mask boot ROM mapped just below 4GB,
+	  with the first SRAM region being located at address 0.
+	  Some newer SoCs map the boot ROM at address 0 instead and move the
+	  SRAM to a different address.
 
 config SYS_CLK_FREQ
 	default 408000000 if MACH_SUNIV
@@ -133,8 +133,8 @@ config SUNXI_GEN_NCAT2
 	select MMC_SUNXI_HAS_NEW_MODE
 	select SUPPORT_SPL
 	help
-	Select this for sunxi SoCs which have D1 like peripherals, clocks
-	and memory map.
+	  Select this for sunxi SoCs which have D1 like peripherals, clocks
+	  and memory map.
 
 config SUNXI_MINIMUM_DRAM_MB
 	int
@@ -142,11 +142,11 @@ config SUNXI_MINIMUM_DRAM_MB
 	default 64 if MACH_SUN8I_V3S || TARGET_SUN20I_D1
 	default 256
 	help
-	Minimum DRAM size expected on the board. Traditionally we assumed
-	256 MB, so that U-Boot would load at 160MB. With co-packaged DRAM
-	we have smaller sizes, though, so that U-Boot's own load address and
-	the default payload addresses must be shifted down.
-	This is expected to be fixed by the SoC selection.
+	  Minimum DRAM size expected on the board. Traditionally we assumed
+	  256 MB, so that U-Boot would load at 160MB. With co-packaged DRAM
+	  we have smaller sizes, though, so that U-Boots own load address and
+	  the default payload addresses must be shifted down.
+	  This is expected to be fixed by the SoC selection.
 
 config PRE_CON_BUF_ADDR
 	default 0x81000000 if MACH_SUNIV
@@ -210,25 +210,25 @@ config MMC_SUNXI_SLOT_EXTRA
 	int "mmc extra slot number"
 	default -1
 	help
-	sunxi builds always enable mmc0, some boards also have a second sdcard
-	slot or emmc on mmc1 - mmc3. Setting this to 1, 2 or 3 will enable
-	support for this.
+	  sunxi builds always enable mmc0, some boards also have a second sdcard
+	  slot or emmc on mmc1 - mmc3. Setting this to 1, 2 or 3 will enable
+	  support for this.
 
 config MMC1_PINS_PH
 	bool "Pins for mmc1 are on Port H"
 	depends on MACH_SUN4I || MACH_SUN7I || MACH_SUN8I_R40
 	help
-	Select this option for boards where mmc1 uses the Port H pinmux.
+	  Select this option for boards where mmc1 uses the Port H pinmux.
 
 config UART0_PORT_F
 	bool "UART0 on MicroSD breakout board"
 	help
-	Repurpose the SD card slot for getting access to the UART0 serial
-	console. Primarily useful only for low level u-boot debugging on
-	tablets, where normal UART0 is difficult to access and requires
-	device disassembly and/or soldering. As the SD card can't be used
-	at the same time, the system can be only booted in the FEL mode.
-	Only enable this if you really know what you are doing.
+	  Repurpose the SD card slot for getting access to the UART0 serial
+	  console. Primarily useful only for low level u-boot debugging on
+	  tablets, where normal UART0 is difficult to access and requires
+	  device disassembly and/or soldering. As the SD card cannot be used
+	  at the same time, the system can be only booted in the FEL mode.
+	  Only enable this if you really know what you are doing.
 
 config AXP_DISABLE_BOOT_ON_POWERON
 	bool "Disable device boot on power plug-in"
