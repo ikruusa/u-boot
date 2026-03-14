@@ -284,3 +284,4 @@ config BLUETOOTH_DT_DEVICE_FIXUP
 endmenu
 
 endif
+
