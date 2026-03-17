@@ -45,6 +45,7 @@ config BOARD_SUNXI
 	imply MMC
 	imply OF_LIBFDT_OVERLAY
 	imply PRE_CONSOLE_BUFFER
+	imply OF_UPSTREAM
 	imply SPL
 	imply SPL_GPIO
 	imply SPL_LIBCOMMON_SUPPORT
