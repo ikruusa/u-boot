@@ -9,9 +9,7 @@
 
 #define THEAD_SYNC_I		".long 0x01a0000b"
 #define THEAD_DCACHE_CIALL	".long 0x0030000b"
-#define THEAD_DCACHE_CIPA_A0	".long 0x02b5000b"
 #define THEAD_DCACHE_IALL	".long 0x0020000b"
-#define THEAD_DCACHE_IPA_A0	".long 0x02a5000b"
 #define THEAD_ICACHE_IPA_A0	".long 0x0385000b"
 
 static inline void sync_i(void)
@@ -25,27 +23,9 @@ void flush_dcache_all(void)
 	sync_i();
 }
 
-void flush_dcache_range(unsigned long start, unsigned long end)
-{
-	register ulong addr asm ("a0") = start & -CONFIG_SYS_CACHELINE_SIZE;
-
-	for (; addr < end; addr += CONFIG_SYS_CACHELINE_SIZE)
-		asm volatile (THEAD_DCACHE_CIPA_A0 :: "r" (addr) : "memory");
-	sync_i();
-}
-
 void invalidate_dcache_all(void)
 {
 	asm volatile (THEAD_DCACHE_IALL ::: "memory");
-	sync_i();
-}
-
-void invalidate_dcache_range(unsigned long start, unsigned long end)
-{
-	register ulong addr asm ("a0") = start & -CONFIG_SYS_CACHELINE_SIZE;
-
-	for (; addr < end; addr += CONFIG_SYS_CACHELINE_SIZE)
-		asm volatile (THEAD_DCACHE_IPA_A0 :: "r" (addr) : "memory");
 	sync_i();
 }
 
