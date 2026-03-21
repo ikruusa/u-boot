@@ -58,7 +58,7 @@ config TARGET_SUN20I_D1
 	select MMC_SUNXI_HAS_NEW_MODE
 	select SUNXI_GEN_NCAT2
 	select SUNXI_NEW_PINCTRL
-	select THEAD_C906
+	select ALLWINNER_D1
 
 config TARGET_TH1520_LPI4A
 	bool "Support Sipeed's TH1520 Lichee PI 4A Board"
