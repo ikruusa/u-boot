@@ -9,51 +9,35 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define CSR_MXSTATUS			0x7c0
-#define  CSR_MXSTATUS_THEADISAEE	BIT(22)
-#define  CSR_MXSTATUS_MAEE		BIT(21)
-#define  CSR_MXSTATUS_CLINTEE		BIT(17)
-#define  CSR_MXSTATUS_UCME		BIT(16)
-#define  CSR_MXSTATUS_MM		BIT(15)
-#define CSR_MHCR			0x7c1
-#define  CSR_MHCR_WBR			BIT(8)
-#define  CSR_MHCR_BTB			BIT(6)
-#define  CSR_MHCR_BPE			BIT(5)
-#define  CSR_MHCR_RS			BIT(4)
-#define  CSR_MHCR_WB			BIT(3)
-#define  CSR_MHCR_WA			BIT(2)
-#define  CSR_MHCR_DE			BIT(1)
-#define  CSR_MHCR_IE			BIT(0)
-#define CSR_MCOR			0x7c2
-#define  CSR_MCOR_IBP_INV		BIT(18)
-#define  CSR_MCOR_BTB_INV		BIT(17)
-#define  CSR_MCOR_BHT_INV		BIT(16)
-#define  CSR_MCOR_CACHE_INV		BIT(4)
-#define CSR_MCCR2			0x7c3
-#define  CSR_MCCR2_TPRF			BIT(31)
-#define  CSR_MCCR2_IPRF(n)		((n) << 29)
-#define  CSR_MCCR2_TSETUP		BIT(25)
-#define  CSR_MCCR2_TLNTCY(n)		((n) << 22)
-#define  CSR_MCCR2_DSETUP		BIT(19)
-#define  CSR_MCCR2_DLNTCY(n)		((n) << 16)
-#define  CSR_MCCR2_L2EN			BIT(3)
-#define  CSR_MCCR2_RFE			BIT(0)
-#define CSR_MHINT			0x7c5
-#define  CSR_MHINT_FENCERW_BROAD_DIS	BIT(22)
-#define  CSR_MHINT_TLB_BRAOD_DIS	BIT(21)
-#define  CSR_MHINT_NSFE			BIT(18)
-#define  CSR_MHINT_L2_PREF_DIST(n)	((n) << 16)
-#define  CSR_MHINT_L2PLD		BIT(15)
-#define  CSR_MHINT_DCACHE_PREF_DIST(n)	((n) << 13)
-#define  CSR_MHINT_LPE			BIT(9)
-#define  CSR_MHINT_ICACHE_PREF		BIT(8)
-#define  CSR_MHINT_AMR			BIT(3)
-#define  CSR_MHINT_DCACHE_PREF		BIT(2)
-#define CSR_MHINT2			0x7cc
-#define  CSR_MHINT2_LOCAL_ICG_EN(n)	BIT((n) + 14)
-#define CSR_MHINT4			0x7ce
-#define CSR_MSMPR			0x7f3
-#define  CSR_MSMPR_SMPEN		BIT(0)
+#define CSR_MXSTATUS		0x7c0
+#define CSR_MHCR		0x7c1
+#define CSR_MHINT		0x7c5
+
+#define MXSTATUS_THEADISAEE	BIT(22) /* T-HEAD ISA extensions enable */
+#define MXSTATUS_MM		BIT(15) /* misaligned access enable */
+
+#define MHCR_IE			BIT(0)	/* icache enable */
+#define MHCR_DE			BIT(1)	/* dcache enable */
+#define MHCR_WA			BIT(2)	/* dcache write allocate */
+#define MHCR_WB			BIT(3)	/* dcache write back */
+#define MHCR_RS			BIT(4)	/* return stack enable */
+#define MHCR_BPE		BIT(5)	/* branch prediction enable */
+#define MHCR_BTB_C906		BIT(6)	/* branch target prediction enable */
+#define MHCR_WBR		BIT(8)	/* write burst enable */
+#define MHCR_BTB_E906		BIT(12) /* branch target prediction enable */
+
+#define MHINT_DPLD		BIT(2)	/* dcache prefetch enable */
+#define MHINT_AMR_PAGE		(0x0 << 3)
+#define MHINT_AMR_LIMIT_3	(0x1 << 3)
+#define MHINT_AMR_LIMIT_64	(0x2 << 3)
+#define MHINT_AMR_LIMIT_128	(0x3 << 3)
+#define MHINT_IPLD		BIT(8)	/* icache prefetch enable */
+#define MHINT_IWPE		BIT(9)	/* icache way prediction enable */
+#define MHINT_D_DIS_PREFETCH_2	(0x0 << 13)
+#define MHINT_D_DIS_PREFETCH_4	(0x1 << 13)
+#define MHINT_D_DIS_PREFETCH_8	(0x2 << 13)
+#define MHINT_D_DIS_PREFETCH_16	(0x3 << 13)
+#define MHINT_AEE		BIT(20) /* accurate exception enable */
 
 int spl_dram_init(void)
 {
