@@ -118,7 +118,7 @@ config SYS_BOARD
 	default "sunxi"
 
 config SYS_CPU
-	default "thead" if TARGET_SUN20I_D1
+	default "d1" if TARGET_SUN20I_D1
 
 config SYS_LOAD_ADDR
 	default 0x81000000 if MACH_SUNIV
