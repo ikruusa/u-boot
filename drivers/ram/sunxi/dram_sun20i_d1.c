@@ -12,14 +12,6 @@
  * [1] https://github.com/szemzoa/awboot.git
  */
 
-#ifndef CONFIG_DRAM_CLK
-#define CONFIG_DRAM_CLK 792
-#endif
-
-#ifndef CONFIG_DRAM_ZQ
-#define CONFIG_DRAM_ZQ 0x007b7bfb
-#endif
-
 #define readl rv_readl
 #define writel rv_writel
 #include <asm/io.h>
