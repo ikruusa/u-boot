@@ -154,6 +154,12 @@ config SUNXI_MINIMUM_DRAM_MB
 	the default payload addresses must be shifted down.
 	This is expected to be fixed by the SoC selection.
 
+config DRAM_CLK
+        default 792 if TARGET_SUN20I_D1
+
+config DRAM_ZQ
+        default 8092667 if TARGET_SUN20I_D1
+
 config PRE_CON_BUF_ADDR
 	default 0x81000000 if MACH_SUNIV
 	default 0x2f000000 if MACH_SUN9I
