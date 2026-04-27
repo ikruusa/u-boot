@@ -51,6 +51,14 @@ config TARGET_STARFIVE_VISIONFIVE2
 	bool "Support StarFive VisionFive2 Board"
 	select BOARD_LATE_INIT
 
+config TARGET_SUN20I_D1
+	bool "Support Allwinner D1 Boards"
+	select GENERIC_RISCV
+	select MMC_SUNXI_HAS_NEW_MODE
+	select SUNXI_GEN_NCAT2
+	select SUNXI_NEW_PINCTRL
+	select THEAD_C906
+
 config TARGET_TH1520_LPI4A
 	bool "Support Sipeed's TH1520 Lichee PI 4A Board"
 	select SYS_CACHE_SHIFT_6
@@ -117,6 +125,7 @@ source "board/sophgo/milkv_duo/Kconfig"
 source "board/sophgo/licheerv_nano/Kconfig"
 source "board/spacemit/bananapi-f3/Kconfig"
 source "board/starfive/visionfive2/Kconfig"
+source "board/sun20i-d1/Kconfig"
 source "board/thead/th1520_lpi4a/Kconfig"
 source "board/xilinx/mbv/Kconfig"
 
@@ -130,6 +139,7 @@ source "arch/riscv/cpu/generic/Kconfig"
 source "arch/riscv/cpu/jh7110/Kconfig"
 source "arch/riscv/cpu/k1/Kconfig"
 source "arch/riscv/cpu/k230/Kconfig"
+source "arch/riscv/cpu/thead/Kconfig"
 source "arch/riscv/cpu/th1520/Kconfig"
 
 # architecture-specific options below
