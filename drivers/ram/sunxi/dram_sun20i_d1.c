@@ -12,7 +12,15 @@
  * [1] https://github.com/szemzoa/awboot.git
  */
 
+#define readl rv_readl
+#define writel rv_writel
 #include <asm/io.h>
+#undef readl
+#undef writel
+
+#define readl(x)       rv_readl((const volatile void __iomem *)(u64)(x))
+#define writel(v, x)   rv_writel(v, (volatile void __iomem *)(u64)(x))
+
 #include <config.h>
 #ifdef CONFIG_RAM
   #include <dm.h>

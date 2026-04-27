@@ -211,7 +211,8 @@ static int script_boot(struct udevice *dev, struct bootflow *bflow)
 			ret = env_set_hex("distro_bootpart", bflow->part);
 		if (!ret)
 			ret = env_set("prefix", bflow->subdir);
-		if (!ret && IS_ENABLED(CONFIG_ARCH_SUNXI) &&
+		if (!ret && (IS_ENABLED(CONFIG_ARCH_SUNXI) ||
+			     IS_ENABLED(CONFIG_TARGET_SUN20I_D1)) &&
 		    !strcmp("mmc", blk_get_devtype(bflow->blk)))
 			ret = env_set_hex("mmc_bootdev", desc->devnum);
 	} else {
