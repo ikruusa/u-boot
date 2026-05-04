@@ -1,0 +1,193 @@
+if TARGET_SUN20I_D1
+
+config SYS_BOARD
+	default "sunxi-riscv"
+
+config SYS_CPU
+	default "thead"
+
+config SYS_SOC
+	default "sun20i-d1"
+
+config SYS_CONFIG_NAME
+	default "sun20i"
+
+config IDENT_STRING
+	default " Allwinner D1"
+
+config SYS_CLK_FREQ
+	default 1008000000
+
+config SYS_LOAD_ADDR
+	default 0x42000000
+
+config TEXT_BASE
+	default 0x42e00000
+
+config HAS_CUSTOM_SYS_INIT_SP_ADDR
+	default y
+
+config CUSTOM_SYS_INIT_SP_ADDR
+	default 0x43e00000
+
+config SUNXI_SRAM_ADDRESS
+	hex
+	default 0x20000
+
+config SUNXI_GEN_NCAT2
+	bool
+	select MMC_SUNXI_HAS_NEW_MODE
+	select SUPPORT_SPL
+	help
+	  Select this for sunxi SoCs which have D1 like peripherals, clocks
+	  and memory map.
+
+config SUNXI_MINIMUM_DRAM_MB
+	int
+	default 64
+	help
+	  Minimum DRAM size expected on the board.
+
+config DRAM_CLK
+	default 792
+
+config DRAM_ZQ
+	default 8092667
+
+config PRE_CON_BUF_ADDR
+	default 0x43000000
+
+config MISC_INIT_R
+	default y
+
+config SPL_MAX_SIZE
+	default 0x27fa0
+
+config SPL_PAD_TO
+	default 0x0
+
+config SPL_BSS_START_ADDR
+	default 0x43f80000
+
+config SPL_TEXT_BASE
+	default 0x20060
+
+config SPL_SHARES_INIT_SP_ADDR
+	default n
+
+config SPL_HAVE_INIT_STACK
+	default y
+
+config SPL_STACK
+	default 0x48000
+
+config SPL_STACK_R_ADDR
+	default 0x43e00000
+
+config SPL_OPENSBI_LOAD_ADDR
+	default 0x40000000
+
+config SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
+	default 0x40
+
+config SPL_SYS_MMCSD_RAW_MODE
+	default y
+
+config SYS_MMCSD_RAW_MODE_U_BOOT_DATA_PART_OFFSET
+	default 0x10
+
+config SYS_SPI_U_BOOT_OFFS
+	default 0x8000
+
+config OLD_SUNXI_KERNEL_COMPAT
+	bool "Enable workarounds for booting old kernels"
+	help
+	  This option enables various workarounds for old kernels, this results
+	  in suboptimal settings for newer kernels, only enable if needed.
+
+config BLUETOOTH_DT_DEVICE_FIXUP
+	string "Fixup the Bluetooth controller address"
+	default ""
+	help
+	  This option specifies the DT compatible string of a Bluetooth
+	  controller for which U-Boot should set the local-bd-address property.
+
+config MMC_SUNXI_SLOT_EXTRA
+	int "mmc extra slot number"
+	default -1
+	help
+	  D1 builds always enable mmc0. Some boards also have a second SD card
+	  slot or eMMC on mmc1 - mmc3. Setting this to 1, 2, or 3 enables
+	  support for this.
+
+config SPL_IMAGE_TYPE
+	string
+	default "sunxi_egon"
+
+config BOARD_SPECIFIC_OPTIONS
+	def_bool y
+	select BINMAN
+	select CLK
+	select CMD_GPIO if GPIO
+	select CMD_MMC if MMC
+	select CMD_USB if DISTRO_DEFAULTS && USB_HOST
+	select DM
+	select DM_GPIO if GPIO
+	select DM_I2C if I2C
+	select DM_KEYBOARD
+	select DM_MMC if MMC
+	select DM_SERIAL if SERIAL
+	select DM_SPI if SPI
+	select DM_SPI_FLASH if SPI && MTD
+	select ENV_RELOC_GD_ENV_ADDR
+	select OF_BOARD_SETUP
+	select OF_UPSTREAM
+	select PINCTRL
+	select RAM if SPL_DM
+	select SPL_CLK if SPL_DM
+	select SPL_DM if SPL
+	select SPL_DM_SPI if SPL_DM && SPL_SPI
+	select SPL_DM_SPI_FLASH if SPL_DM && SPL_SPI
+	select SPL_OF_CONTROL if SPL_DM
+	select SPL_PINCONF if SPL_DM
+	select SPL_PINCTRL if SPL_DM
+	select SPL_RAM if SPL_DM
+	select SPL_SEPARATE_BSS if SPL
+	select SUNXI_GPIO if GPIO
+	select SUPPORT_SPL
+	select SYS_NS16550 if SERIAL
+	select USB if DISTRO_DEFAULTS
+	select USB_KEYBOARD if DISTRO_DEFAULTS && USB_HOST
+	select USB_STORAGE if DISTRO_DEFAULTS && USB_HOST
+	select USE_PREBOOT
+	imply BOARD_LATE_INIT
+	imply CMD_DM
+	imply CMD_GPT
+	imply DISTRO_DEFAULTS
+	imply DM_REGULATOR
+	imply DM_REGULATOR_FIXED
+	imply FAT_WRITE
+	imply FIT
+	imply MMC
+	imply OF_LIBFDT_OVERLAY
+	imply PRE_CONSOLE_BUFFER
+	imply SPL
+	imply SPL_GPIO
+	imply SPL_LIBCOMMON_SUPPORT
+	imply SPL_LIBGENERIC_SUPPORT
+	imply SPL_LOAD_FIT
+	imply SPL_MMC if MMC
+	imply SPL_POWER
+	imply SPL_SERIAL
+	imply SYSRESET
+	imply SYSRESET_SBI
+	imply SYSRESET_WATCHDOG
+	imply SYSRESET_WATCHDOG_AUTO
+	imply USB_EHCI_GENERIC
+	imply USB_EHCI_HCD
+	imply USB_GADGET
+	imply USB_OHCI_GENERIC
+	imply USB_OHCI_HCD
+	imply WDT
+
+endif
