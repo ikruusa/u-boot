@@ -68,7 +68,7 @@ config SYS_CBSIZE
 
 config SYS_PBSIZE
 	int "Console output buffer size"
-	default 1024 if ARCH_SUNXI
+	default 1024 if ARCH_SUNXI || TARGET_SUN20I_D1
 	default 1044
 	help
 	  Set the size of the console output buffer. This is used when we need
@@ -786,7 +786,7 @@ config LAST_STAGE_INIT
 config MISC_INIT_R
 	bool "Execute Misc Init"
 	depends on !COMPILE_TEST
-	default y if ARCH_KEYSTONE || ARCH_SUNXI || MPC85xx
+	default y if ARCH_KEYSTONE || ARCH_SUNXI || TARGET_SUN20I_D1 || MPC85xx
 	default y if ARCH_OMAP2PLUS && !AM33XX
 	help
 	  Enabling this option calls 'misc_init_r' function
