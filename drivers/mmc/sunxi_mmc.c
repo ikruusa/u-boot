@@ -36,20 +36,14 @@
 #define CCM_MMC_CTRL_MODE_SEL_NEW	0
 #endif
 
-#include "../../arch/arm/include/asm/arch-sunxi/clock_sun50i_h6.h"
-
-unsigned int clock_get_pll6(void)
-{
-	uint32_t rval = readl((void *)0x2001020);
-
-	int n = ((rval & CCM_PLL6_CTRL_N_MASK) >> CCM_PLL6_CTRL_N_SHIFT) + 1;
-	int m = ((rval >> 1) & 0x1) + 1;
-	int p0 = ((rval >> 16) & 0x7) + 1;
-	/* The register defines PLL6-2X, not plain PLL6 */
-	uint32_t freq = 24000000UL * n / m / p0;
-
-	return freq;
-}
+/*
+ * ARM SoCs get clock_get_pll6() from <asm/arch/clock.h> which compiles
+ * clock_sun50i_h6.c when CONFIG_SUN50I_GEN_H6 is set.
+ * For RISC-V D1 (CONFIG_SUNXI_GEN_NCAT2) get it from the t-head header.
+ */
+#if CONFIG_IS_ENABLED(DM_MMC) && IS_ENABLED(CONFIG_SUNXI_GEN_NCAT2)
+#include <asm/arch/clock.h>
+#endif
 
 struct sunxi_mmc_plat {
 	struct mmc_config cfg;
@@ -782,3 +776,4 @@ U_BOOT_DRIVER(sunxi_mmc_drv) = {
 	.priv_auto	= sizeof(struct sunxi_mmc_priv),
 };
 #endif
+
