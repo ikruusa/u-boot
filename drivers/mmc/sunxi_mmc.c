@@ -38,8 +38,9 @@
 
 /*
  * ARM SoCs get clock_get_pll6() from <asm/arch/clock.h> which compiles
- * clock_sun50i_h6.c when CONFIG_SUN50I_GEN_H6 is set.
- * For RISC-V D1 (CONFIG_SUNXI_GEN_NCAT2) get it from the t-head header.
+ * clock_sun50i_h6.c when CONFIG_SUN50I_GEN_H6 is set, and RISC-V D1
+ * (CONFIG_SUNXI_GEN_NCAT2) gets it from
+ * arch/riscv/include/asm/arch-sun20i-d1/clock.h.
  */
 #if CONFIG_IS_ENABLED(DM_MMC) && IS_ENABLED(CONFIG_SUNXI_GEN_NCAT2)
 #include <asm/arch/clock.h>
@@ -776,4 +777,5 @@ U_BOOT_DRIVER(sunxi_mmc_drv) = {
 	.priv_auto	= sizeof(struct sunxi_mmc_priv),
 };
 #endif
+
 
