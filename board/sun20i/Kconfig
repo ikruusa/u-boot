@@ -1,7 +1,7 @@
 if TARGET_SUN20I_D1
 
 config SYS_BOARD
-	default "sunxi-riscv"
+	default "sun20i"
 
 config SYS_CPU
 	default "thead"

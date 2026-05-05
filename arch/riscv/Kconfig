@@ -129,7 +129,7 @@ source "board/sophgo/milkv_duo/Kconfig"
 source "board/sophgo/licheerv_nano/Kconfig"
 source "board/spacemit/bananapi-f3/Kconfig"
 source "board/starfive/visionfive2/Kconfig"
-source "board/sunxi-riscv/Kconfig"
+source "board/sun20i/Kconfig"
 source "board/thead/th1520_lpi4a/Kconfig"
 source "board/xilinx/mbv/Kconfig"
 
@@ -640,3 +640,4 @@ config SPL_OPTEE_LOAD_ADDR
 	  Load address of the OP-TEE binary.
 
 endmenu
+
