@@ -383,10 +383,6 @@ int misc_init_r(void)
 	return 0;
 }
 
-int board_late_init(void)
-{
-	return 0;
-}
 
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
