@@ -13,6 +13,7 @@
 #include <asm/csr.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
+#include <asm/thead_csr.h>
 #include <cpu.h>
 #include <dm.h>
 #include <env.h>
@@ -151,11 +152,6 @@ u32 spl_boot_device(void)
 {
 	return sunxi_get_boot_device();
 }
-
-#define CSR_MXSTATUS		0x7c0
-#define CSR_MHCR		0x7c1
-#define CSR_MCOR		0x7c2
-#define CSR_MHINT		0x7c5
 
 int spl_board_init_f(void)
 {

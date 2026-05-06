@@ -7,8 +7,7 @@
 #include <asm/cache.h>
 #include <asm/csr.h>
 #include <linux/bitops.h>
-
-#include "thead_csr.h"
+#include <asm/thead_csr.h>
 
 /*
  * cleanup_before_linux() is called just before we call linux
@@ -41,3 +40,4 @@ void harts_early_init(void)
 			MHCR_BTB_E906 | MHCR_BPE | MHCR_RS | MHCR_WB | MHCR_WA);
 	}
 }
+
