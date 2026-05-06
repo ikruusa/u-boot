@@ -1,4 +1,4 @@
-"/* SPDX-License-Identifier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * T-Head custom CSR definitions for C906 / E906 / C910
  */
@@ -37,4 +37,4 @@
 #define MHINT_D_DIS_PREFETCH_16	(0x3 << 13)
 #define MHINT_AEE		BIT(20) /* accurate exception enable */
 
-#endif /* _ASM_RISCV_THEAD_CSR_H */"
+#endif /* _ASM_RISCV_THEAD_CSR_H */
