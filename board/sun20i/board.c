@@ -13,7 +13,7 @@
 #include <asm/csr.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
-#include <asm/thead_csr.h>
+#include <asm/arch/thead_csr.h>
 #include <cpu.h>
 #include <dm.h>
 #include <env.h>

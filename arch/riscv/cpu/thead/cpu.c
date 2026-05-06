@@ -4,10 +4,11 @@
  */
 
 #include <irq_func.h>
+#include <asm/arch-sun20i-d1/thead_csr.h>
 #include <asm/cache.h>
 #include <asm/csr.h>
 #include <linux/bitops.h>
-#include <asm/thead_csr.h>
+
 
 /*
  * cleanup_before_linux() is called just before we call linux

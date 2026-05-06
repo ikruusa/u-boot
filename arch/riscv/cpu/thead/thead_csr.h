@@ -1,14 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
-/*
- * T-Head custom CSR definitions for C906 / E906 / C910
- */
 
-#ifndef _ASM_RISCV_THEAD_CSR_H
-#define _ASM_RISCV_THEAD_CSR_H
+#ifndef _THEAD_CSR_H_
+#define _THEAD_CSR_H_
 
 #define CSR_MXSTATUS		0x7c0
 #define CSR_MHCR		0x7c1
-#define CSR_MCOR		0x7c2
 #define CSR_MHINT		0x7c5
 
 #define MXSTATUS_THEADISAEE	BIT(22) /* T-HEAD ISA extensions enable */
@@ -37,4 +33,4 @@
 #define MHINT_D_DIS_PREFETCH_16	(0x3 << 13)
 #define MHINT_AEE		BIT(20) /* accurate exception enable */
 
-#endif /* _ASM_RISCV_THEAD_CSR_H */
+#endif /* _THEAD_CSR_H_ */

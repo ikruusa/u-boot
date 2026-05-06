@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0+
 
-#include <cpu_func.h>
+#include <asm/arch-sun20i-d1/thead_csr.h>
 #include <asm/cache.h>
 #include <asm/csr.h>
+#include <cpu_func.h>
 #include <linux/bitops.h>
-
-#include <asm/thead_csr.h>
 
 #define THEAD_SYNC_I		".long 0x01a0000b"
 #define THEAD_DCACHE_CIALL	".long 0x0030000b"
