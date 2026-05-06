@@ -30,16 +30,10 @@ int board_init(void)
 	return cpu_probe_all();
 }
 
-int sunxi_get_sid(unsigned int *sid)
-{
-	return -ENODEV;
-}
-
 #define SPL_ADDR		CONFIG_SUNXI_SRAM_ADDRESS
 
 /* The low 8-bits of the 'boot_media' field in the SPL header */
 #define SUNXI_BOOTED_FROM_MMC0	0
-#define SUNXI_BOOTED_FROM_NAND	1
 #define SUNXI_BOOTED_FROM_MMC2	2
 #define SUNXI_BOOTED_FROM_SPI	3
 #define SUNXI_BOOTED_FROM_MMC0_HIGH	0x10
@@ -62,17 +56,6 @@ static int sunxi_get_boot_source(void)
 	struct boot_file_head *egon_head = (void *)SPL_ADDR;
 	struct toc0_main_info *toc0_info = (void *)SPL_ADDR;
 
-	/*
-	 * On the ARMv5 SoCs, the SPL header in SRAM is overwritten by the
-	 * exception vectors in U-Boot proper, so we won't find any
-	 * information there. Also the FEL stash is only valid in the SPL,
-	 * so we can't use that either. So if this is called from U-Boot
-	 * proper, just return MMC0 as a placeholder, for now.
-	 */
-	if (IS_ENABLED(CONFIG_MACH_SUNIV) &&
-	    !IS_ENABLED(CONFIG_SPL_BUILD))
-		return SUNXI_BOOTED_FROM_MMC0;
-
 	if (sunxi_egon_valid(egon_head))
 		return readb(&egon_head->boot_media);
 	if (sunxi_toc0_valid(toc0_info))
@@ -82,8 +65,8 @@ static int sunxi_get_boot_source(void)
 	return SUNXI_INVALID_BOOT_SOURCE;
 }
 
-/* The sunxi internal brom will try to loader external bootloader
- * from mmc0, nand flash, mmc2.
+/* The sunxi internal BROM will try to load an external bootloader
+ * from mmc0, mmc2, or SPI flash.
  */
 uint32_t sunxi_get_boot_device(void)
 {
@@ -111,8 +94,6 @@ uint32_t sunxi_get_boot_device(void)
 	case SUNXI_BOOTED_FROM_MMC0:
 	case SUNXI_BOOTED_FROM_MMC0_HIGH:
 		return BOOT_DEVICE_MMC1;
-	case SUNXI_BOOTED_FROM_NAND:
-		return BOOT_DEVICE_NAND;
 	case SUNXI_BOOTED_FROM_MMC2:
 	case SUNXI_BOOTED_FROM_MMC2_HIGH:
 		return BOOT_DEVICE_MMC2;
@@ -193,7 +174,6 @@ int spl_board_init_f(void)
 		return ret;
 	}
 
-	/* Initialize extension CSRs. */
 	printf("mxstatus=0x%08lx mhcr=0x%08lx mcor=0x%08lx mhint=0x%08lx\n",
 	       csr_read(CSR_MXSTATUS),
 	       csr_read(CSR_MHCR),
@@ -235,7 +215,6 @@ DECLARE_GLOBAL_DATA_PTR;
  * Try to use the environment from the boot source first.
  * For MMC, this means a FAT partition on the boot device (SD or eMMC).
  * If the raw MMC environment is also enabled, this is tried next.
- * When booting from NAND we try UBI first, then NAND directly.
  * SPI flash falls back to FAT (on SD card).
  */
 enum env_location env_get_location(enum env_operation op, int prio)
@@ -254,12 +233,6 @@ enum env_location env_get_location(enum env_operation op, int prio)
 			return ENVL_FAT;
 		if (IS_ENABLED(CONFIG_ENV_IS_IN_MMC))
 			return ENVL_MMC;
-		break;
-	case BOOT_DEVICE_NAND:
-		if (prio == 0 && IS_ENABLED(CONFIG_ENV_IS_IN_UBI))
-			return ENVL_UBI;
-		if (IS_ENABLED(CONFIG_ENV_IS_IN_NAND))
-			return ENVL_NAND;
 		break;
 	case BOOT_DEVICE_SPI:
 		if (prio == 0 && IS_ENABLED(CONFIG_ENV_IS_IN_SPI_FLASH))
