@@ -10,24 +10,19 @@
  * Some board init for the Allwinner A10-evb board.
  */
 
-#include <dm.h>
-#include <cpu.h>
-#include <env.h>
-#include <env_internal.h>
-#include <fdt_support.h>
-#include <generic-phy.h>
-#include <image.h>
-#include <init.h>
-#include <net.h>
-#include <phy-sun4i-usb.h>
-#include <ram.h>
-#include <remoteproc.h>
-#include <spl.h>
-#include <sunxi_image.h>
-#include <u-boot/crc.h>
 #include <asm/csr.h>
 #include <asm/global_data.h>
 #include <asm/io.h>
+#include <cpu.h>
+#include <dm.h>
+#include <env.h>
+#include <env_internal.h>
+#include <fdt_support.h>
+#include <image.h>
+#include <init.h>
+#include <ram.h>
+#include <spl.h>
+#include <sunxi_image.h>
 
 int board_init(void)
 {

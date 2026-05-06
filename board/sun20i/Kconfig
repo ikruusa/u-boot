@@ -99,19 +99,6 @@ config SYS_MMCSD_RAW_MODE_U_BOOT_DATA_PART_OFFSET
 config SYS_SPI_U_BOOT_OFFS
 	default 0x8000
 
-config OLD_SUNXI_KERNEL_COMPAT
-	bool "Enable workarounds for booting old kernels"
-	help
-	  This option enables various workarounds for old kernels, this results
-	  in suboptimal settings for newer kernels, only enable if needed.
-
-config BLUETOOTH_DT_DEVICE_FIXUP
-	string "Fixup the Bluetooth controller address"
-	default ""
-	help
-	  This option specifies the DT compatible string of a Bluetooth
-	  controller for which U-Boot should set the local-bd-address property.
-
 config MMC_SUNXI_SLOT_EXTRA
 	int "mmc extra slot number"
 	default -1
@@ -134,7 +121,6 @@ config BOARD_SPECIFIC_OPTIONS
 	select DM
 	select DM_GPIO if GPIO
 	select DM_I2C if I2C
-	select DM_KEYBOARD
 	select DM_MMC if MMC
 	select DM_SERIAL if SERIAL
 	select DM_SPI if SPI
@@ -185,7 +171,6 @@ config BOARD_SPECIFIC_OPTIONS
 	imply SYSRESET_WATCHDOG_AUTO
 	imply USB_EHCI_GENERIC
 	imply USB_EHCI_HCD
-	imply USB_GADGET
 	imply USB_OHCI_GENERIC
 	imply USB_OHCI_HCD
 	imply WDT
