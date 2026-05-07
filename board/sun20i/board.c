@@ -18,10 +18,7 @@
 #include <dm.h>
 #include <env.h>
 #include <env_internal.h>
-#include <fdt_support.h>
-#include <image.h>
 #include <init.h>
-#include <ram.h>
 #include <spl.h>
 #include <sunxi_image.h>
 
@@ -153,58 +150,6 @@ u32 spl_boot_device(void)
 	return sunxi_get_boot_device();
 }
 
-int spl_board_init_f(void)
-{
-	int ret;
-	struct udevice *dev;
-
-	ret = cpu_probe_all();
-	if (ret) {
-		debug("CPU init failed: %d\n", ret);
-	}
-
-	/* DDR init */
-	ret = uclass_get_device(UCLASS_RAM, 0, &dev);
-	if (ret) {
-		debug("DRAM init failed: %d\n", ret);
-		return ret;
-	}
-
-	printf("mxstatus=0x%08lx mhcr=0x%08lx mcor=0x%08lx mhint=0x%08lx\n",
-	       csr_read(CSR_MXSTATUS),
-	       csr_read(CSR_MHCR),
-	       csr_read(CSR_MCOR),
-	       csr_read(CSR_MHINT));
-
-	csr_set(CSR_MXSTATUS, 0x638000);
-	csr_write(CSR_MCOR, 0x70013);
-	csr_write(CSR_MHCR, 0x11ff);
-	csr_write(CSR_MHINT, 0x16e30c);
-
-	return 0;
-}
-
-#ifdef CONFIG_SPL_BUILD
-void spl_perform_board_fixups(struct spl_image_info *spl_image)
-{
-	struct ram_info info;
-	struct udevice *dev;
-	int ret;
-
-	ret = uclass_get_device(UCLASS_RAM, 0, &dev);
-	if (ret)
-		panic("No RAM device");
-
-	ret = ram_get_info(dev, &info);
-	if (ret)
-		panic("No RAM info");
-
-	ret = fdt_fixup_memory(spl_image->fdt_addr, info.base, info.size);
-	if (ret)
-		panic("Failed to update DTB");
-}
-#endif
-
 DECLARE_GLOBAL_DATA_PTR;
 
 /*
@@ -278,7 +223,7 @@ static struct boot_file_head *get_spl_header(uint8_t req_version)
 	return spl;
 }
 
-static const char *get_spl_dt_name(void)
+const char *get_spl_dt_name(void)
 {
 	struct boot_file_head *spl = get_spl_header(SPL_DT_HEADER_VERSION);
 
@@ -351,48 +296,3 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 {
 	return 0;
 }
-
-#ifdef CONFIG_SPL_LOAD_FIT
-
-static void set_spl_dt_name(const char *name)
-{
-	struct boot_file_head *spl = get_spl_header(SPL_ENV_HEADER_VERSION);
-
-	if (!spl)
-		return;
-
-	/* Promote the header version for U-Boot proper, if needed. */
-	if (spl->spl_signature[3] < SPL_DT_HEADER_VERSION)
-		spl->spl_signature[3] = SPL_DT_HEADER_VERSION;
-
-	strcpy((char *)&spl->string_pool, name);
-	spl->dt_name_offset = offsetof(struct boot_file_head, string_pool);
-}
-
-int board_fit_config_name_match(const char *name)
-{
-	const char *best_dt_name = get_spl_dt_name();
-	int ret;
-
-#ifdef CONFIG_DEFAULT_DEVICE_TREE
-	if (best_dt_name == NULL)
-		best_dt_name = CONFIG_DEFAULT_DEVICE_TREE;
-#endif
-
-	if (best_dt_name == NULL) {
-		/* No DT name was provided, so accept the first config. */
-		return 0;
-	}
-
-	ret = strcmp(name, best_dt_name);
-
-	/*
-	 * If one of the FIT configurations matches the most accurate DT name,
-	 * update the SPL header to provide that DT name to U-Boot proper.
-	 */
-	if (ret == 0)
-		set_spl_dt_name(best_dt_name);
-
-	return ret;
-}
-#endif
