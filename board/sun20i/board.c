@@ -7,7 +7,8 @@
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
  * Tom Cubie <tangliang@allwinnertech.com>
  *
- * Some board init for the Allwinner A10-evb board.
+ * Board initialization, environment and boot source detection for
+ * Allwinner D1(s) RISC-V SoC.
  */
 
 #include <asm/csr.h>

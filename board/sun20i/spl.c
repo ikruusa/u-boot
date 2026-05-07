@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * (C) Copyright 2024, Allwinner Technology Co., Ltd.
+ * (C) Copyright 2007-2011
+ * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
+ * Tom Cubie <tangliang@allwinnertech.com>
+ * (C) Copyright 2012-2013 Henrik Nordstrom <henrik@henriknordstrom.net>
+ * (C) Copyright 2013 Luke Kenneth Casson Leighton <lkcl@lkcl.net>
  *
- * SPL board initialization for Allwinner D1
+ * SPL board initialization for Allwinner D1(s) RISC-V SoC.
  */
 
 #include <fdt_support.h>
