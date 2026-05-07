@@ -260,25 +260,19 @@ enum env_location env_get_location(enum env_operation op, int prio)
 	return ENVL_UNKNOWN;
 }
 
-/*
- * On older SoCs the SPL is actually at address zero, so using NULL as
- * an error value does not work.
- */
-#define INVALID_SPL_HEADER ((void *)~0UL)
-
-static struct boot_file_head * get_spl_header(uint8_t req_version)
+static struct boot_file_head *get_spl_header(uint8_t req_version)
 {
 	struct boot_file_head *spl = (void *)(ulong)SPL_ADDR;
 	uint8_t spl_header_version = spl->spl_signature[3];
 
 	/* Is there really the SPL header (still) there? */
 	if (memcmp(spl->spl_signature, SPL_SIGNATURE, 3) != 0)
-		return INVALID_SPL_HEADER;
+		return NULL;
 
 	if (spl_header_version < req_version) {
 		printf("sunxi SPL version mismatch: expected %u, got %u\n",
 		       req_version, spl_header_version);
-		return INVALID_SPL_HEADER;
+		return NULL;
 	}
 
 	return spl;
@@ -289,7 +283,7 @@ static const char *get_spl_dt_name(void)
 	struct boot_file_head *spl = get_spl_header(SPL_DT_HEADER_VERSION);
 
 	/* Check if there is a DT name stored in the SPL header. */
-	if (spl != INVALID_SPL_HEADER && spl->dt_name_offset)
+	if (spl && spl->dt_name_offset)
 		return (char *)spl + spl->dt_name_offset;
 
 	return NULL;
@@ -304,7 +298,7 @@ static void parse_spl_header(const uint32_t spl_addr)
 {
 	struct boot_file_head *spl = get_spl_header(SPL_ENV_HEADER_VERSION);
 
-	if (spl == INVALID_SPL_HEADER)
+	if (!spl)
 		return;
 
 	if (!spl->fel_script_address)
@@ -364,7 +358,7 @@ static void set_spl_dt_name(const char *name)
 {
 	struct boot_file_head *spl = get_spl_header(SPL_ENV_HEADER_VERSION);
 
-	if (spl == INVALID_SPL_HEADER)
+	if (!spl)
 		return;
 
 	/* Promote the header version for U-Boot proper, if needed. */
