@@ -684,7 +684,9 @@ static void mctl_phy_ac_remapping(const dram_para_t *para,
 	debug("SoC Chip ID: 0x%08x\n", sid_read_soc_chipid());
 
 	/* No remapping needed on T113-s4 with 256MB co-packaged DRAM */
-	if (sid_read_soc_chipid() == SUNXI_CHIPID_T113M4020DC0)
+	if (sid_read_soc_chipid() == SUNXI_CHIPID_T113M4020DC0 || 
+	    sid_read_soc_chipid() == SUNXI_CHIPID_F133A || 
+	    sid_read_soc_chipid() == SUNXI_CHIPID_D1S)
 		return;
 
 	if (para->dram_type == SUNXI_DRAM_TYPE_DDR2) {
@@ -1381,32 +1383,42 @@ static int init_DRAM(int type, const dram_para_t *para)
 	return mem_size_mb;
 }
 
-static const dram_para_t para = {
-	.dram_clk	= CONFIG_DRAM_CLK,
-	.dram_type	= CONFIG_SUNXI_DRAM_TYPE,
-	.dram_zq	= CONFIG_DRAM_ZQ,
-	.dram_odt_en	= CONFIG_DRAM_SUNXI_ODT_EN,
-	.dram_mr0	= 0x1c70,
-	.dram_mr1	= 0x42,
-	.dram_mr2	= 0x18,
-	.dram_mr3	= 0,
-	.dram_tpr0	= 0x004a2195,
-	.dram_tpr1	= 0x02423190,
-	.dram_tpr2	= 0x0008b061,
-	.dram_tpr3	= 0xb4787896, // unused
-	.dram_tpr4	= 0,
-	.dram_tpr5	= 0x48484848,
-	.dram_tpr6	= 0x00000048,
-	.dram_tpr7	= 0x1620121e, // unused
-	.dram_tpr8	= 0,
-	.dram_tpr9	= 0, // clock?
-	.dram_tpr10	= 0,
-	.dram_tpr11	= CONFIG_DRAM_SUNXI_TPR11,
-	.dram_tpr12	= CONFIG_DRAM_SUNXI_TPR12,
-};
-
 unsigned long sunxi_dram_init(void)
 {
+	dram_para_t para = {
+		.dram_clk	= CONFIG_DRAM_CLK,
+		.dram_type	= CONFIG_SUNXI_DRAM_TYPE,
+		.dram_zq	= CONFIG_DRAM_ZQ,
+		.dram_odt_en	= CONFIG_DRAM_SUNXI_ODT_EN,
+		.dram_mr0	= 0x1c70,
+		.dram_mr1	= 0x42,
+		.dram_mr2	= 0x18,
+		.dram_mr3	= 0,
+		.dram_tpr0	= 0x004a2195,
+		.dram_tpr1	= 0x02423190,
+		.dram_tpr2	= 0x0008b061,
+		.dram_tpr3	= 0xb4787896, // unused
+		.dram_tpr4	= 0,
+		.dram_tpr5	= 0x48484848,
+		.dram_tpr6	= 0x00000048,
+		.dram_tpr7	= 0x1620121e, // unused
+		.dram_tpr8	= 0,
+		.dram_tpr9	= 0, // clock?
+		.dram_tpr10	= 0,
+		.dram_tpr11	= CONFIG_DRAM_SUNXI_TPR11,
+		.dram_tpr12	= CONFIG_DRAM_SUNXI_TPR12,
+	};
+
+	/* Adjust dram_mr1 based on chipid */
+	switch (sid_read_soc_chipid()) {
+	case SUNXI_CHIPID_F133A:
+	case SUNXI_CHIPID_D1S:
+		para.dram_mr1 = 0x02;
+		break;
+	default:
+		break;
+	}
+
 	return init_DRAM(0, &para) * 1024UL * 1024;
 };
 

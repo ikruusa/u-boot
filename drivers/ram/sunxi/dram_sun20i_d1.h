@@ -47,23 +47,23 @@ typedef struct dram_para {
 	const u32	dram_odt_en;
 
 	/* timing configuration */
-	const u32	dram_mr0;
-	const u32	dram_mr1;
-	const u32	dram_mr2;
-	const u32	dram_mr3;
-	const u32	dram_tpr0;	//DRAMTMG0
-	const u32	dram_tpr1;	//DRAMTMG1
-	const u32	dram_tpr2;	//DRAMTMG2
-	const u32	dram_tpr3;	//DRAMTMG3
-	const u32	dram_tpr4;	//DRAMTMG4
-	const u32	dram_tpr5;	//DRAMTMG5
-	const u32	dram_tpr6;	//DRAMTMG8
-	const u32	dram_tpr7;
-	const u32	dram_tpr8;
-	const u32	dram_tpr9;
-	const u32	dram_tpr10;
-	const u32	dram_tpr11;
-	const u32	dram_tpr12;
+	u32	dram_mr0;
+	u32	dram_mr1;
+	u32	dram_mr2;
+	u32	dram_mr3;
+	u32	dram_tpr0;	//DRAMTMG0
+	u32	dram_tpr1;	//DRAMTMG1
+	u32	dram_tpr2;	//DRAMTMG2
+	u32	dram_tpr3;	//DRAMTMG3
+	u32	dram_tpr4;	//DRAMTMG4
+	u32	dram_tpr5;	//DRAMTMG5
+	u32	dram_tpr6;	//DRAMTMG8
+	u32	dram_tpr7;
+	u32	dram_tpr8;
+	u32	dram_tpr9;
+	u32	dram_tpr10;
+	u32	dram_tpr11;
+	u32	dram_tpr12;
 } dram_para_t;
 
 typedef struct dram_config {
