@@ -12,8 +12,6 @@
  * [1] https://github.com/szemzoa/awboot.git
  */
 
-#define DEBUG
-
 #include <asm/io.h>
 #include <config.h>
 #include <cpu_func.h>
@@ -1353,8 +1351,6 @@ static int init_DRAM(int type, const dram_para_t *para)
 	}
 	mem_size_mb = rc;
 
-	debug("init_DRAM: post-size stage\n");
-
 	/* Purpose ?? */
 	if (config.dram_tpr13 & BIT(30)) {
 		rc = para->dram_tpr8;
@@ -1392,11 +1388,7 @@ static int init_DRAM(int type, const dram_para_t *para)
 	if (para->dram_type == SUNXI_DRAM_TYPE_LPDDR3)
 		clrsetbits_le32(SUNXI_DRAM_PHY_BASE + 0x07c, 0xf0000, 0x1000);
 
-	debug("init_DRAM: before dram_enable_all_master\n");
-
 	dram_enable_all_master();
-
-	debug("init_DRAM: after dram_enable_all_master, before MBUS config\n");
 
 	/* Configure MBUS master port priorities (needed for MMC, display, etc.) */
 	{
@@ -1411,15 +1403,12 @@ static int init_DRAM(int type, const dram_para_t *para)
 		}
 	}
 
-	debug("init_DRAM: before write test\n");
-
 	if (config.dram_tpr13 & BIT(28)) {
 		if ((readl((void __iomem *)0x70005d4) & BIT(16)) ||
 		    dramc_simple_wr_test(mem_size_mb, 4096))
 			return 0;
 	}
 
-	debug("init_DRAM: returning %d MB\n", mem_size_mb);
 	return mem_size_mb;
 }
 
@@ -1477,14 +1466,12 @@ static int sunxi_ram_probe(struct udevice *dev)
 	debug("%s: %s: probing\n", __func__, dev->name);
 
 	dram_size = sunxi_dram_init();
-	debug("sunxi_ram_probe: sunxi_dram_init returned %lu\n", dram_size);
 	if (!dram_size) {
 		printf("DRAM init failed\n");
 		return -ENODEV;
 	}
 
 	priv->size = dram_size;
-	debug("sunxi_ram_probe: done, size=%lu\n", dram_size);
 
 	return 0;
 }
