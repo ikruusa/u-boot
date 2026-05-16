@@ -1449,11 +1449,13 @@ unsigned long sunxi_dram_init(void)
 		.dram_tpr12	= CONFIG_DRAM_SUNXI_TPR12,
 	};
 
-	/* Adjust dram_mr1 based on chipid */
-	switch (sid_read_soc_chipid()) {
-	case SUNXI_CHIPID_F133A:
-	case SUNXI_CHIPID_D1S:
+	/* Set MR1 based on DRAM type */
+	switch (para->dram_type) {
+	case SUNXI_DRAM_TYPE_DDR2:
 		para.dram_mr1 = 0x02;
+		break;
+	case SUNXI_DRAM_TYPE_DDR3:
+		para.dram_mr1 = 0x42;
 		break;
 	default:
 		break;
