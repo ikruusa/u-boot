@@ -49,9 +49,11 @@ config SUNXI_MINIMUM_DRAM_MB
 	  Minimum DRAM size expected on the board.
 
 config DRAM_CLK
+	int "DRAM clock speed"
 	default 792
 
 config DRAM_ZQ
+	int "DRAM ZQ value"
 	default 8092667
 
 config PRE_CON_BUF_ADDR
