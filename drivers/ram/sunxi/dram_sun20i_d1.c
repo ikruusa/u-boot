@@ -1439,7 +1439,7 @@ unsigned long sunxi_dram_init(void)
 	};
 
 	/* Set MR1 based on DRAM type */
-	switch (para->dram_type) {
+	switch (para.dram_type) {
 	case SUNXI_DRAM_TYPE_DDR2:
 		para.dram_mr1 = 0x02;
 		break;
