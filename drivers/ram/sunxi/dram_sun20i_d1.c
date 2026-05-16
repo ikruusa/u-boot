@@ -12,8 +12,11 @@
  * [1] https://github.com/szemzoa/awboot.git
  */
 
+#define DEBUG
+
 #include <asm/io.h>
 #include <config.h>
+#include <cpu_func.h>
 #ifdef CONFIG_RAM
   #include <dm.h>
   #include <ram.h>
@@ -262,14 +265,14 @@ static void mctl_set_timing_params(const dram_para_t *para,
 		wr_latency	= 1;
 		tmrw		= 0;
 		twr2rd		= twtr + 5;
-		tcwl		= 0;
+		tcwl		= tcl - 1;
 
 		mr1		= para->dram_mr1;
 		mr2		= 0;
 		mr3		= 0;
 
-		tdinit0		= 200 * CONFIG_DRAM_CLK + 1;
-		tdinit1		= 100 * CONFIG_DRAM_CLK / 1000 + 1;
+		tdinit0		= 400 * CONFIG_DRAM_CLK + 1;
+		tdinit1		= 500 * CONFIG_DRAM_CLK / 1000 + 1;
 		tdinit2		= 200 * CONFIG_DRAM_CLK + 1;
 		tdinit3		= 1 * CONFIG_DRAM_CLK + 1;
 
@@ -516,7 +519,7 @@ static int ccu_set_pll_ddr_clk(int index, const dram_para_t *para,
 	val &= ~0x0007ff03;			// clear dividers
 	val |= (n - 1) << 8;			// set PLL division
 	val |= BIT(31) | BIT(30);		// enable PLL and LDO
-	writel(val | BIT(29), SUNXI_CCM_BASE_PTR + 0x10);
+	writel(val, SUNXI_CCM_BASE_PTR + 0x10);	// write without LOCK_EN
 
 	// wait for PLL to lock
 	while ((readl(SUNXI_CCM_BASE_PTR + 0x10) & BIT(28)) == 0)
@@ -690,7 +693,8 @@ static void mctl_phy_ac_remapping(const dram_para_t *para,
 		return;
 
 	if (para->dram_type == SUNXI_DRAM_TYPE_DDR2) {
-		if (fuse == 15)
+		/* ASM reference: only apply table[6] for fuses 13 or 14 */
+		if (fuse != 13 && fuse != 14)
 			return;
 		cfg = ac_remapping_tables[6];
 	} else {
@@ -1093,6 +1097,7 @@ static int auto_scan_dram_size(const dram_para_t *para, dram_config_t *config)
 		/* set row mode */
 		clrsetbits_le32(mc_work_mode, 0xf0c, 0x6f0);
 		udelay(1);
+		flush_dcache_all();
 
 		// Scan per address line, until address wraps (i.e. see shadow)
 		for (i = 11; i < 17; i++) {
@@ -1124,6 +1129,7 @@ static int auto_scan_dram_size(const dram_para_t *para, dram_config_t *config)
 		/* Set bank mode for current rank */
 		clrsetbits_le32(mc_work_mode, 0xffc, 0x6a4);
 		udelay(1);
+		flush_dcache_all();
 
 		// Test if bit A23 is BA2 or mirror XXX A22?
 		chk = (unsigned long)CFG_SYS_SDRAM_BASE + (1UL << 22);
@@ -1270,7 +1276,8 @@ static int auto_scan_dram_config(const dram_para_t *para,
 static int init_DRAM(int type, const dram_para_t *para)
 {
 	dram_config_t config = {
-		.dram_para1	= 0x000010d2,
+		.dram_para1	= (para->dram_type == SUNXI_DRAM_TYPE_DDR2) ?
+				  0x000000d2 : 0x000010d2,
 		.dram_para2	= 0,
 		.dram_tpr13	= CONFIG_DRAM_SUNXI_TPR13,
 	};
@@ -1304,7 +1311,17 @@ static int init_DRAM(int type, const dram_para_t *para)
 	dram_voltage_set(para);
 
 	/* Set SDRAM controller auto config */
-	if ((config.dram_tpr13 & BIT(0)) == 0) {
+	/*
+	 * F133A/D1S: skip auto-scan, use vendor-proven 64MB DDR2 params.
+	 * The auto-scan misdetects geometry on these SoCs.
+	 */
+	if (sid_read_soc_chipid() == SUNXI_CHIPID_F133A ||
+	    sid_read_soc_chipid() == SUNXI_CHIPID_D1S) {
+		config.dram_para1 = 0x000000d2; /* row=13, bank=4, page=2KB (vendor) */
+		config.dram_para2 = 0;           /* single rank, full DQ */
+		config.dram_tpr13 |= BIT(14) | BIT(13) | BIT(1) | BIT(0);
+		debug("F133A/D1S: hardcoded dram_para1/2, skipping auto-scan\n");
+	} else if ((config.dram_tpr13 & BIT(0)) == 0) {
 		if (auto_scan_dram_config(para, &config) == 0) {
 			printf("auto_scan_dram_config() FAILED\n");
 			return 0;
@@ -1335,6 +1352,8 @@ static int init_DRAM(int type, const dram_para_t *para)
 		config.dram_para2 = (config.dram_para2 & 0xffffU) | rc << 16;
 	}
 	mem_size_mb = rc;
+
+	debug("init_DRAM: post-size stage\n");
 
 	/* Purpose ?? */
 	if (config.dram_tpr13 & BIT(30)) {
@@ -1373,13 +1392,34 @@ static int init_DRAM(int type, const dram_para_t *para)
 	if (para->dram_type == SUNXI_DRAM_TYPE_LPDDR3)
 		clrsetbits_le32(SUNXI_DRAM_PHY_BASE + 0x07c, 0xf0000, 0x1000);
 
+	debug("init_DRAM: before dram_enable_all_master\n");
+
 	dram_enable_all_master();
+
+	debug("init_DRAM: after dram_enable_all_master, before MBUS config\n");
+
+	/* Configure MBUS master port priorities (needed for MMC, display, etc.) */
+	{
+		int i;
+		/* Enable bandwidth limit window, set window size to ~1us */
+		writel(399, SUNXI_DRAM_COM_BASE + 0x00c);
+		writel(BIT(16), SUNXI_DRAM_COM_BASE + 0x200);
+		/* Set all master ports to high priority with decent bandwidth */
+		for (i = 0; i <= 40; i++) {
+			writel(0x00000300, SUNXI_DRAM_COM_BASE + 0x210 + i * 0x10);
+			writel(0x01000100, SUNXI_DRAM_COM_BASE + 0x214 + i * 0x10);
+		}
+	}
+
+	debug("init_DRAM: before write test\n");
+
 	if (config.dram_tpr13 & BIT(28)) {
 		if ((readl((void __iomem *)0x70005d4) & BIT(16)) ||
 		    dramc_simple_wr_test(mem_size_mb, 4096))
 			return 0;
 	}
 
+	debug("init_DRAM: returning %d MB\n", mem_size_mb);
 	return mem_size_mb;
 }
 
@@ -1435,12 +1475,14 @@ static int sunxi_ram_probe(struct udevice *dev)
 	debug("%s: %s: probing\n", __func__, dev->name);
 
 	dram_size = sunxi_dram_init();
+	debug("sunxi_ram_probe: sunxi_dram_init returned %lu\n", dram_size);
 	if (!dram_size) {
 		printf("DRAM init failed\n");
 		return -ENODEV;
 	}
 
 	priv->size = dram_size;
+	debug("sunxi_ram_probe: done, size=%lu\n", dram_size);
 
 	return 0;
 }
