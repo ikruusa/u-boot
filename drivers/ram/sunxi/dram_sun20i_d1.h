@@ -64,6 +64,7 @@ typedef struct dram_para {
 	u32	dram_tpr10;
 	u32	dram_tpr11;
 	u32	dram_tpr12;
+	u32	dram_tpr13;
 } dram_para_t;
 
 typedef struct dram_config {
@@ -80,5 +81,27 @@ static inline int ns_to_t(int nanoseconds)
 
 	return DIV_ROUND_UP(ctrl_freq * nanoseconds, 1000);
 }
+
+/*
+ * Known co-packaged DRAM configurations — all parameters are fixed
+ * by the SoC itself, no board-level configuration needed.
+ * If dram_para1 is 0, auto-scan will determine the geometry.
+ */
+struct co_package_dram {
+	u16		chipid;
+	u32		dram_clk;
+	u32		dram_type;
+	u32		dram_zq;
+	u32		dram_odt_en;
+	u32		dram_mr1;
+	u32		dram_para1;
+	u32		dram_tpr0;
+	u32		dram_tpr11;
+	u32		dram_tpr12;
+	u32		dram_tpr13;
+};
+
+/* Bitmask to mark co-package config as fully configured (skip auto-scan) */
+#define CO_TPR13_BITS	(BIT(14) | BIT(13) | BIT(1) | BIT(0))
 
 #endif /* _SUNXI_DRAM_SUN20I_D1_H */

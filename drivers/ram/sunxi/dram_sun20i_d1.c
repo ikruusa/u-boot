@@ -1271,15 +1271,18 @@ static int auto_scan_dram_config(const dram_para_t *para,
 	return 1;
 }
 
-static int init_DRAM(int type, const dram_para_t *para)
+static int init_DRAM(u32 dram_para1_val, const dram_para_t *para)
 {
 	dram_config_t config = {
-		.dram_para1	= (para->dram_type == SUNXI_DRAM_TYPE_DDR2) ?
-				  0x000000d2 : 0x000010d2,
+		.dram_para1	= dram_para1_val,
 		.dram_para2	= 0,
-		.dram_tpr13	= CONFIG_DRAM_SUNXI_TPR13,
+		.dram_tpr13	= para->dram_tpr13,
 	};
 	u32 rc, mem_size_mb;
+
+	/* Fill in defaults if not provided by chip table */
+	if (!config.dram_tpr13)
+		config.dram_tpr13 = CONFIG_DRAM_SUNXI_TPR13;
 
 	debug("DRAM BOOT DRIVE INFO: %s\n", "V0.24");
 	debug("DRAM CLK = %d MHz\n", para->dram_clk);
@@ -1309,16 +1312,10 @@ static int init_DRAM(int type, const dram_para_t *para)
 	dram_voltage_set(para);
 
 	/* Set SDRAM controller auto config */
-	/*
-	 * F133A/D1S: skip auto-scan, use vendor-proven 64MB DDR2 params.
-	 * The auto-scan misdetects geometry on these SoCs.
-	 */
-	if (sid_read_soc_chipid() == SUNXI_CHIPID_F133A ||
-	    sid_read_soc_chipid() == SUNXI_CHIPID_D1S) {
-		config.dram_para1 = 0x000000d2; /* row=13, bank=4, page=2KB (vendor) */
-		config.dram_para2 = 0;           /* single rank, full DQ */
-		config.dram_tpr13 |= BIT(14) | BIT(13) | BIT(1) | BIT(0);
-		debug("F133A/D1S: hardcoded dram_para1/2, skipping auto-scan\n");
+	if (dram_para1_val) {
+		/* Co-packaged DRAM: skip auto-scan, use hardcoded geometry */
+		config.dram_para2 = 0;
+		config.dram_tpr13 |= CO_TPR13_BITS;
 	} else if ((config.dram_tpr13 & BIT(0)) == 0) {
 		if (auto_scan_dram_config(para, &config) == 0) {
 			printf("auto_scan_dram_config() FAILED\n");
@@ -1412,45 +1409,102 @@ static int init_DRAM(int type, const dram_para_t *para)
 	return mem_size_mb;
 }
 
+
+
+static const struct co_package_dram co_package_configs[] = {
+	{
+		.chipid		= SUNXI_CHIPID_F133A,
+		.dram_clk	= 528,
+		.dram_type	= SUNXI_DRAM_TYPE_DDR2,
+		.dram_zq	= 0x007b7bf9,
+		.dram_odt_en	= 0,
+		.dram_mr1	= 0x02,
+		.dram_para1	= 0x000000d2,
+		.dram_tpr0	= 0x00471992,
+		.dram_tpr11	= 0x00030010,
+		.dram_tpr12	= 0x00000035,
+		.dram_tpr13	= 0x34004002,
+	},
+	{
+		.chipid		= SUNXI_CHIPID_D1S,
+		.dram_clk	= 528,
+		.dram_type	= SUNXI_DRAM_TYPE_DDR2,
+		.dram_zq	= 0x007b7bf9,
+		.dram_odt_en	= 0,
+		.dram_mr1	= 0x02,
+		.dram_para1	= 0x000000d2,
+		.dram_tpr0	= 0x00471992,
+		.dram_tpr11	= 0x00030010,
+		.dram_tpr12	= 0x00000035,
+		.dram_tpr13	= 0x34004002,
+	},
+	{
+		.chipid		= SUNXI_CHIPID_T113S3,
+		.dram_clk	= 792,
+		.dram_type	= SUNXI_DRAM_TYPE_DDR3,
+		.dram_zq	= 0x007b7a3b,
+		.dram_odt_en	= 0,
+		.dram_mr1	= 0x42,
+		.dram_para1	= 0,		/* auto-scan works on this chip */
+		.dram_tpr0	= 0x004a2195,
+		.dram_tpr11	= 0x00340000,
+		.dram_tpr12	= 0x00000046,
+		.dram_tpr13	= 0x34000100,
+	},
+	{
+		.chipid		= SUNXI_CHIPID_T113M4020DC0,
+		.dram_clk	= 792,
+		.dram_type	= SUNXI_DRAM_TYPE_DDR3,
+		.dram_zq	= 0x007b7a3b,
+		.dram_odt_en	= 0,
+		.dram_mr1	= 0x42,
+		.dram_para1	= 0,		/* auto-scan works on this chip */
+		.dram_tpr0	= 0x004a2195,
+		.dram_tpr11	= 0x00340000,
+		.dram_tpr12	= 0x00000046,
+		.dram_tpr13	= 0x34000100,
+	},
+};
+
 unsigned long sunxi_dram_init(void)
 {
+	const struct co_package_dram *cfg = NULL;
+	uint32_t chipid = sid_read_soc_chipid();
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(co_package_configs); i++) {
+		if (chipid == co_package_configs[i].chipid) {
+			cfg = &co_package_configs[i];
+			break;
+		}
+	}
+
 	dram_para_t para = {
-		.dram_clk	= CONFIG_DRAM_CLK,
-		.dram_type	= CONFIG_SUNXI_DRAM_TYPE,
-		.dram_zq	= CONFIG_DRAM_ZQ,
-		.dram_odt_en	= CONFIG_DRAM_SUNXI_ODT_EN,
+		.dram_clk	= cfg ? cfg->dram_clk : CONFIG_DRAM_CLK,
+		.dram_type	= cfg ? cfg->dram_type : CONFIG_SUNXI_DRAM_TYPE,
+		.dram_zq	= cfg ? cfg->dram_zq : CONFIG_DRAM_ZQ,
+		.dram_odt_en	= cfg ? cfg->dram_odt_en : CONFIG_DRAM_SUNXI_ODT_EN,
 		.dram_mr0	= 0x1c70,
-		.dram_mr1	= 0x42,
+		.dram_mr1	= cfg ? cfg->dram_mr1 : 0x42,
 		.dram_mr2	= 0x18,
 		.dram_mr3	= 0,
-		.dram_tpr0	= 0x004a2195,
+		.dram_tpr0	= cfg ? cfg->dram_tpr0 : 0x004a2195,
 		.dram_tpr1	= 0x02423190,
 		.dram_tpr2	= 0x0008b061,
-		.dram_tpr3	= 0xb4787896, // unused
+		.dram_tpr3	= 0xb4787896,
 		.dram_tpr4	= 0,
 		.dram_tpr5	= 0x48484848,
 		.dram_tpr6	= 0x00000048,
-		.dram_tpr7	= 0x1620121e, // unused
+		.dram_tpr7	= 0x1620121e,
 		.dram_tpr8	= 0,
-		.dram_tpr9	= 0, // clock?
+		.dram_tpr9	= 0,
 		.dram_tpr10	= 0,
-		.dram_tpr11	= CONFIG_DRAM_SUNXI_TPR11,
-		.dram_tpr12	= CONFIG_DRAM_SUNXI_TPR12,
+		.dram_tpr11	= cfg ? cfg->dram_tpr11 : CONFIG_DRAM_SUNXI_TPR11,
+		.dram_tpr12	= cfg ? cfg->dram_tpr12 : CONFIG_DRAM_SUNXI_TPR12,
+		.dram_tpr13	= cfg ? cfg->dram_tpr13 : 0,
 	};
 
-	/* Set MR1 based on DRAM type */
-	switch (para.dram_type) {
-	case SUNXI_DRAM_TYPE_DDR2:
-		para.dram_mr1 = 0x02;
-		break;
-	case SUNXI_DRAM_TYPE_DDR3:
-		para.dram_mr1 = 0x42;
-		break;
-	default:
-		break;
-	}
-
-	return init_DRAM(0, &para) * 1024UL * 1024;
+	return init_DRAM(cfg ? cfg->dram_para1 : 0, &para) * 1024UL * 1024;
 };
 
 #ifdef CONFIG_RAM		/* using the driver model */
