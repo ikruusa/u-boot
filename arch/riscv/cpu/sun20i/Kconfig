@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0+
+
+config SUN20I
+	bool
+	select SYS_CACHE_SHIFT_6
+	select SYS_CACHE_THEAD_CMO
