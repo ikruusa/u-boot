@@ -33,6 +33,13 @@
 #define CCU_H6_MMC_GATE_RESET           0x84c
 #define RESET_SHIFT                     16
 
+/*
+ * UART gate/reset register (offset 0x90c). This is the same register
+ * as CCU_H6_UART_GATE_RESET in the ARM sunxi clock_sun50i_h6.h; it is
+ * named CCU_UART_GATE_RESET here because it is only used by this port.
+ */
+#define CCU_UART_GATE_RESET             0x90c
+
 /* D1 CCU base address */
 #define SUNXI_CCM_BASE                  0x02001000
 
@@ -43,6 +50,8 @@
 
 #ifndef __ASSEMBLY__
 #include <asm/io.h>
+
+void sun20i_uart_init(void);
 
 /**
  * clock_get_pll6() - read the PLL6 (PERIPH0) clock rate
