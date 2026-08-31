@@ -1,0 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
+#ifndef _ASM_RISCV_ARCH_SUN20I_CPU_H
+#define _ASM_RISCV_ARCH_SUN20I_CPU_H
+
+#define SUNXI_MMC0_BASE		0x04020000
+#define SUNXI_MMC1_BASE		0x04021000
+#define SUNXI_MMC2_BASE		0x04022000
+
+#endif
