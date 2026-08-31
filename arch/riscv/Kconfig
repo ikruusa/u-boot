@@ -60,6 +60,21 @@ config TARGET_STARFIVE_VISIONFIVE2
 	bool "Support StarFive VisionFive2 Board"
 	select BOARD_LATE_INIT
 
+config TARGET_SUN20I
+	bool "Support Allwinner sun20i Boards"
+	select GENERIC_RISCV
+	select SPECIFY_CONSOLE_INDEX
+	select SUN20I
+	select SUNXI_GEN_NCAT2
+	select MMC_SUNXI_HAS_NEW_MODE
+	select PINCTRL_SUN20I_D1
+	select CLK_SUN20I_D1
+	select SUNXI_NEW_PINCTRL
+	help
+	  Support for Allwinner sun20i (D1) RISC-V boards. These SoCs
+	  reuse the peripherals and memory map of the D1-like ARM SoCs
+	  (NCAT2), so the shared sunxi drivers are enabled.
+
 config TARGET_TH1520_LPI4A
 	bool "Support Sipeed's TH1520 Lichee PI 4A Board"
 	select SYS_CACHE_SHIFT_6
@@ -129,6 +144,7 @@ source "board/sophgo/licheerv_nano/Kconfig"
 source "board/spacemit/k1/Kconfig"
 source "board/spacemit/k3/Kconfig"
 source "board/starfive/visionfive2/Kconfig"
+source "board/sun20i/Kconfig"
 source "board/thead/th1520_lpi4a/Kconfig"
 source "board/xilinx/mbv/Kconfig"
 
