@@ -97,7 +97,8 @@ static int mmc_set_mod_clk(struct sunxi_mmc_priv *priv, unsigned int hz)
 		 * like for the older SoCs. However we still have the hidden
 		 * divider of 2x, so compensate for that here.
 		 */
-		if (IS_ENABLED(CONFIG_MACH_SUN8I_R528))
+		if (IS_ENABLED(CONFIG_MACH_SUN8I_R528) ||
+		    IS_ENABLED(CONFIG_SUN20I))
 			pll_hz /= 2;
 
 		/*
