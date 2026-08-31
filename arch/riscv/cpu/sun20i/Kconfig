@@ -4,3 +4,14 @@ config SUN20I
 	bool
 	select SYS_CACHE_SHIFT_6
 	select SYS_CACHE_THEAD_CMO if !SYS_DCACHE_OFF
+
+config SUNXI_GEN_NCAT2
+	bool
+	default y if SUN20I
+	select DRAM_SUN20I_D1
+	select MMC_SUNXI_HAS_NEW_MODE
+	select SUPPORT_SPL
+	help
+	  The D1/D1s(F133) SoCs belong to the same ("NCAT2") peripheral
+	  generation as the R528/T113. Declare this symbol here, so the
+	  sunxi code can take its NCAT2 paths.
