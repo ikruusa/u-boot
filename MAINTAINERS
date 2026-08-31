@@ -1538,6 +1538,15 @@ F:	drivers/net/dwmac_thead.c
 F:	drivers/pinctrl/pinctrl-th1520.c
 F:	drivers/ram/thead/th1520_ddr.c
 
+RISC-V ALLWINNER SUN20I (D1)
+M:	Indrek Kruusa <indrek.kruusa@gmail.com>
+S:	Maintained
+F:	arch/riscv/cpu/sun20i/
+F:	arch/riscv/include/asm/arch-sun20i/
+F:	board/sun20i/
+F:	configs/lichee_rv_dock_defconfig
+F:	include/configs/sun20i.h
+
 RNG
 M:	Sughosh Ganu <sughosh.ganu@arm.com>
 R:	Heinrich Schuchardt <xypron.glpk@gmx.de>
