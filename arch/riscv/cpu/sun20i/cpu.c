@@ -7,6 +7,8 @@
  */
 
 #include <irq_func.h>
+#include <asm/io.h>
+#include <asm/arch/clock.h>
 #include <asm/arch/thead_csr.h>
 #include <asm/cache.h>
 #include <asm/csr.h>
@@ -36,4 +38,15 @@ void harts_early_init(void)
 	csr_set(CSR_MHCR,
 		MHCR_BTB_C906 | MHCR_BPE | MHCR_RS | MHCR_WB | MHCR_WA);
 	csr_set(CSR_MHINT, MHINT_IWPE | MHINT_IPLD);
+}
+
+void sun20i_uart_init(void)
+{
+	void __iomem *ccm = (void __iomem *)SUNXI_CCM_BASE;
+	int uart = CONFIG_CONS_INDEX - 1;
+
+	/* enable UART bus clock gate */
+	setbits_le32(ccm + CCU_UART_GATE_RESET, BIT(uart));
+	/* deassert UART reset */
+	setbits_le32(ccm + CCU_UART_GATE_RESET, BIT(RESET_SHIFT + uart));
 }

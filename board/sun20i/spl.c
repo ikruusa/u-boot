@@ -14,11 +14,32 @@
 #include <ram.h>
 #include <spl.h>
 #include <sunxi_image.h>
+#include <asm/system.h>
+#include <asm/arch/clock.h>
 #include <cpu.h>
 #include <dm.h>
 #include <init.h>
 
 extern const char *get_spl_dt_name(void);
+
+void board_init_f(ulong dummy)
+{
+	int ret;
+
+	sun20i_uart_init();
+
+	ret = spl_early_init();
+	if (ret)
+		panic("spl_early_init() failed: %d\n", ret);
+
+	riscv_cpu_setup();
+
+	preloader_console_init();
+
+	ret = spl_board_init_f();
+	if (ret)
+		panic("spl_board_init_f() failed: %d\n", ret);
+}
 
 int spl_board_init_f(void)
 {
