@@ -1,0 +1,71 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
+/*
+ * (C) Copyright 2007-2011
+ * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
+ * Tom Cubie <tangliang@allwinnertech.com>
+ *
+ * (C) Copyright 2026 Indrek Kruusa <indrek.kruusa@gmail.com>
+ *
+ * Allwinner D1 (sun20i) clock register definitions.
+ */
+
+#ifndef _ASM_RISCV_ARCH_CLOCK_H
+#define _ASM_RISCV_ARCH_CLOCK_H
+
+#include <linux/bitops.h>
+
+/* MMC clock bit field (common with H6 generation) */
+#define CCM_MMC_CTRL_M(x)               ((x) - 1)
+#define CCM_MMC_CTRL_N(x)               ((x) << 8)
+#define CCM_MMC_CTRL_OSCM24             (0x0 << 24)
+#define CCM_MMC_CTRL_PLL6               (0x1 << 24)
+#define CCM_MMC_CTRL_PLL_PERIPH2X2      (0x2 << 24)
+#define CCM_MMC_CTRL_ENABLE             (0x1 << 31)
+/* H6+ doesn't have these delays */
+#define CCM_MMC_CTRL_OCLK_DLY(a)        ((void)(a), 0)
+#define CCM_MMC_CTRL_SCLK_DLY(a)        ((void)(a), 0)
+
+/* MMC module clock config register offsets */
+#define CCU_MMC0_CLK_CFG                0x830
+#define CCU_MMC1_CLK_CFG                0x834
+#define CCU_MMC2_CLK_CFG                0x838
+
+/*
+ * MMC gate/reset register. The "H6" in the name refers to the
+ * H6-generation CCU register style that the sun20i SoCs share with
+ * the other Allwinner sunxi SoCs. The exact symbol name is dictated
+ * by drivers/mmc/sunxi_mmc.c, which uses it from asm/arch/clock.h.
+ */
+#define CCU_H6_MMC_GATE_RESET           0x84c
+#define RESET_SHIFT                     16
+
+/* PLL6 (PERIPH0) register offset and bitfields */
+#define SUNXI_CCU_PLL6_CFG_OFF          0x020
+#define SUNXI_CCU_PLL6_CTRL_N_SHIFT     8
+#define SUNXI_CCU_PLL6_CTRL_N_MASK      GENMASK(15, 8)
+
+#ifndef __ASSEMBLY__
+#include <asm/arch/cpu.h>
+#include <asm/io.h>
+
+/**
+ * clock_get_pll6() - read the PLL6 (PERIPH0) clock rate
+ *
+ * Returns the PLL6 output frequency in Hz.
+ */
+static inline unsigned int clock_get_pll6(void)
+{
+	u32 rval = readl((void *)(SUNXI_CCM_BASE + SUNXI_CCU_PLL6_CFG_OFF));
+
+	int n = ((rval & SUNXI_CCU_PLL6_CTRL_N_MASK) >>
+		 SUNXI_CCU_PLL6_CTRL_N_SHIFT) + 1;
+	int div2 = ((rval >> 1) & 0x1) + 1;
+	int p0 = ((rval >> 16) & 0x7) + 1;
+	/* The register encodes the doubled PLL6 frequency; the NCAT2
+	 * (D1/R528/T113) PLL_PERIPH0 output is the plain (1x) rate.
+	 */
+	return 24000000UL * n / 2 / p0 / div2;
+}
+#endif /* __ASSEMBLY__ */
+
+#endif /* _ASM_RISCV_ARCH_CLOCK_H */

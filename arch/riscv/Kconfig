@@ -144,6 +144,7 @@ source "arch/riscv/cpu/jh7110/Kconfig"
 source "arch/riscv/cpu/k1/Kconfig"
 source "arch/riscv/cpu/k3/Kconfig"
 source "arch/riscv/cpu/k230/Kconfig"
+source "arch/riscv/cpu/sun20i/Kconfig"
 source "arch/riscv/cpu/th1520/Kconfig"
 
 # architecture-specific options below
