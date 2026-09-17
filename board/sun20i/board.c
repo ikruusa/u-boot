@@ -19,6 +19,7 @@
 #include <dm.h>
 #include <env.h>
 #include <env_internal.h>
+#include <fdt_support.h>
 #include <init.h>
 #include <spl.h>
 #include <sunxi_image.h>
@@ -293,5 +294,12 @@ int misc_init_r(void)
 
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
-	return 0;
+	/*
+	 * The OS tree may be a different blob from the control tree the
+	 * SPL fixed up, and the DRAM size is only known at runtime.
+	 */
+	u64 start = gd->ram_base;
+	u64 size = gd->ram_size;
+
+	return fdt_fixup_memory_banks(blob, &start, &size, 1);
 }
