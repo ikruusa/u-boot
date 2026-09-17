@@ -262,14 +262,14 @@ static void mctl_set_timing_params(const dram_para_t *para,
 		wr_latency	= 1;
 		tmrw		= 0;
 		twr2rd		= twtr + 5;
-		tcwl		= 0;
+		tcwl		= tcl - 1;
 
 		mr1		= para->dram_mr1;
 		mr2		= 0;
 		mr3		= 0;
 
-		tdinit0		= 200 * CONFIG_DRAM_CLK + 1;
-		tdinit1		= 100 * CONFIG_DRAM_CLK / 1000 + 1;
+		tdinit0		= 400 * CONFIG_DRAM_CLK + 1;
+		tdinit1		= 500 * CONFIG_DRAM_CLK / 1000 + 1;
 		tdinit2		= 200 * CONFIG_DRAM_CLK + 1;
 		tdinit3		= 1 * CONFIG_DRAM_CLK + 1;
 
