@@ -1550,6 +1550,7 @@ F:	arch/riscv/cpu/sun20i/
 F:	arch/riscv/include/asm/arch-sun20i/
 F:	board/sun20i/
 F:	configs/lichee_rv_dock_defconfig
+F:	configs/mangopi_mq_d1s_defconfig
 F:	include/configs/sun20i.h
 
 RNG
