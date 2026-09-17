@@ -19,6 +19,7 @@
 #include <dm.h>
 #include <env.h>
 #include <env_internal.h>
+#include <fdt_support.h>
 #include <init.h>
 #include <spl.h>
 #include <sunxi_image.h>
@@ -293,5 +294,15 @@ int misc_init_r(void)
 
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
-	return 0;
+	/*
+	 * The D1/D1s device trees deliberately do not describe the DRAM: its
+	 * size is not discoverable, and it differs between the individual SoC
+	 * variants. Most notably, the D1 is paired with external DDR3, while
+	 * the D1s/F133-A comes with 64 MiB of co-packaged DDR2. Pass on the
+	 * layout the DRAM driver has detected instead.
+	 */
+	u64 start = gd->ram_base;
+	u64 size = gd->ram_size;
+
+	return fdt_fixup_memory_banks(blob, &start, &size, 1);
 }
