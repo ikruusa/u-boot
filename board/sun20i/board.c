@@ -141,7 +141,7 @@ unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc,
 		break;
 	}
 
-	printf("SPL size = %lu, sector = %lu\n", spl_size, sector);
+	debug("SPL size = %lu, sector = %lu\n", spl_size, sector);
 
 	return sector;
 }
