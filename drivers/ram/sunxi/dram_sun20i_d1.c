@@ -688,8 +688,14 @@ static void mctl_phy_ac_remapping(const dram_para_t *para,
 	debug("DDR efuse: 0x%x\n", fuse);
 	debug("SoC Chip ID: 0x%08x\n", sid_read_soc_chipid());
 
-	/* No remapping needed on T113-s4 with 256MB co-packaged DRAM */
-	if (sid_read_soc_chipid() == SUNXI_CHIPID_T113M4020DC0)
+	/*
+	 * No remapping needed on the SoCs with co-packaged DRAM: the T113-s4
+	 * with its 256MB, and the D1s/F133-A parts, are all wired straight
+	 * through, so the pin remapping tables below do not apply to them.
+	 */
+	if (sid_read_soc_chipid() == SUNXI_CHIPID_T113M4020DC0 ||
+	    sid_read_soc_chipid() == SUNXI_CHIPID_F133A ||
+	    sid_read_soc_chipid() == SUNXI_CHIPID_D1S)
 		return;
 
 	if (para->dram_type == SUNXI_DRAM_TYPE_DDR2) {
