@@ -38,6 +38,7 @@ static inline void sync(void)
 /* adding for cadence_qspi_apb.c */
 #define memcpy_fromio(a, c, l)		memcpy((a), (c), (l))
 #define memcpy_toio(c, a, l)		memcpy((c), (a), (l))
+#define memset_io(a, v, l)		memset((a), (v), (l))
 
 #define dmb()		mb()
 #define __iormb()	rmb()
