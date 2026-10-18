@@ -84,3 +84,19 @@
 &uart3 {
 	bootph-all;
 };
+
+/*
+ * Cadence Tensilica HiFi4 audio DSP.  The single node carries all three
+ * register blocks the loader needs, since the CCU and SYS_CFG bits are
+ * shared with the rest of the SoC.
+ */
+&{/soc} {
+	dsp: dsp@1700000 {
+		compatible = "allwinner,sun20i-d1-dsp";
+		reg = <0x01700000 0x1000>,	/* DSP_CFG */
+		      <0x02001000 0x1000>,	/* CCU */
+		      <0x03000000 0x1000>;	/* SYS_CFG */
+		reg-names = "cfg", "ccu", "syscfg";
+		remoteproc-name = "dsp0";
+	};
+};
