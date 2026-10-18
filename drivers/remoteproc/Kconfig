@@ -149,6 +149,16 @@ config REMOTEPROC_TI_IPU
 	help
 	  Say 'y' here to add support for TI' K3 remoteproc driver.
 
+config REMOTEPROC_SUNXI
+	bool "Support for Allwinner sun20i HiFi4 DSP remoteproc driver"
+	select REMOTEPROC
+	depends on DM
+	depends on OF_CONTROL
+	depends on TARGET_SUN20I
+	help
+	  Say 'y' here to add support for the Cadence Tensilica HiFi4 audio
+	  DSP found in Allwinner sun20i (D1) SoCs.
+
 config REMOTEPROC_MAX_FW_SIZE
 	hex "Maximum size of firmware file that needs to be loaded to the remote processor"
 	default 0x10000
