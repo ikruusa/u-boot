@@ -115,12 +115,15 @@ static void sunxi_dsp_power_on(struct sunxi_dsp_priv *priv)
 	writel(DSP_CLK_SRC_PERI2X | DSP_CLK_FACTOR_M(2) | DSP_CLK_SCLK_GATING,
 	       priv->ccu + CCU_DSP_CLK_REG);
 
-	/* Pass the DSP_CFG bus clock and release all three DSP resets
-	 * (each reset bit is 0 = assert, 1 = de-assert)
+	/*
+	 * Pass the DSP_CFG bus clock and bring the *configuration* block out
+	 * of reset.  The core itself stays in reset (DSP_BGR_RST) for now.
+	 *
+	 * Order matters: DSP_CFG_RST resets the DSP_CFG registers themselves,
+	 * so anything written to them before it is deasserted is lost.
 	 */
 	val = readl(priv->ccu + CCU_DSP_BGR_REG);
-	val |= DSP_BGR_CFG_GATING | DSP_BGR_RST |
-	       DSP_BGR_CFG_RST | DSP_BGR_DBG_RST;
+	val |= DSP_BGR_CFG_GATING | DSP_BGR_CFG_RST | DSP_BGR_DBG_RST;
 	writel(val, priv->ccu + CCU_DSP_BGR_REG);
 
 	/* Keep the core halted until ->start() is called */
@@ -129,6 +132,14 @@ static void sunxi_dsp_power_on(struct sunxi_dsp_priv *priv)
 	val = readl(priv->cfg + DSP_CTRL_REG0);
 	val |= DSP_CTRL_CLKEN;
 	writel(val, priv->cfg + DSP_CTRL_REG0);
+}
+
+static void sunxi_dsp_release_reset(struct sunxi_dsp_priv *priv)
+{
+	u32 val = readl(priv->ccu + CCU_DSP_BGR_REG);
+
+	val |= DSP_BGR_RST;
+	writel(val, priv->ccu + CCU_DSP_BGR_REG);
 }
 
 static void sunxi_dsp_power_off(struct sunxi_dsp_priv *priv)
@@ -174,6 +185,7 @@ static int sunxi_dsp_load(struct udevice *dev, ulong addr, ulong size)
 {
 	struct sunxi_dsp_priv *priv = dev_get_priv(dev);
 	const Elf32_Ehdr *ehdr = (const Elf32_Ehdr *)addr;
+	u32 val;
 	int ret;
 
 	if (size < sizeof(*ehdr))
@@ -185,16 +197,25 @@ static int sunxi_dsp_load(struct udevice *dev, ulong addr, ulong size)
 
 	priv->entry = ehdr->e_entry;
 
-	/* Let the system write the local SRAM, then power the core up
-	 * halted so the image can be copied in
-	 */
+	/* Let the system own the local SRAM while we write the image */
 	sunxi_dsp_sram_remap(priv, true);
+
+	/* Power up the CFG block first, then program the boot vector */
 	sunxi_dsp_power_on(priv);
+
+	writel(priv->entry, priv->cfg + DSP_ALT_RESET_VEC_REG);
+
+	val = readl(priv->cfg + DSP_CTRL_REG0);
+	val |= DSP_CTRL_START_VEC_SEL;
+	writel(val, priv->cfg + DSP_CTRL_REG0);
 
 	ret = rproc_elf32_load_image(dev, addr, size);
 
-	/* Hand the local SRAM back to the DSP */
+	/* Hand the SRAM back to the DSP and let the core out of reset.  It
+	 * stays halted by RUN_STALL until ->start() is called.
+	 */
 	sunxi_dsp_sram_remap(priv, false);
+	sunxi_dsp_release_reset(priv);
 
 	if (ret)
 		dev_err(dev, "failed to load image: %d\n", ret);
@@ -205,17 +226,9 @@ static int sunxi_dsp_load(struct udevice *dev, ulong addr, ulong size)
 static int sunxi_dsp_start(struct udevice *dev)
 {
 	struct sunxi_dsp_priv *priv = dev_get_priv(dev);
-	u32 val, stat;
+	u32 stat;
 
-	/* Boot the core from the ELF entry point instead of the DSP's
-	 * default reset vector
-	 */
-	writel(priv->entry, priv->cfg + DSP_ALT_RESET_VEC_REG);
-
-	val = readl(priv->cfg + DSP_CTRL_REG0);
-	val |= DSP_CTRL_START_VEC_SEL | DSP_CTRL_CLKEN;
-	writel(val, priv->cfg + DSP_CTRL_REG0);
-
+	/* The boot vector was programmed in ->load(), before reset release */
 	sunxi_dsp_runstall(priv, false);
 
 	mdelay(1);
