@@ -43,6 +43,29 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	/*
+	 * TEST SCAFFOLDING: the FreeRTOS image for the HiFi4 links its
+	 * .text/.data/.bss at 0x48000000 (ddr1_0_seg, 4 MB), inside Linux
+	 * System RAM. Without this carveout the kernel allocates over the
+	 * DSP's heap.
+	 *
+	 * Keep this well away from the kernel load address (0x40200000,
+	 * ~19 MB with the current Image): U-Boot honours /reserved-memory
+	 * when it allocates, so a hole in the kernel's path makes booti
+	 * fail with "Failed to allocate memory for the image". 0x48000000
+	 * is also inside the DSP-reachable front 256 MB of DDR.
+	 */
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		dsp_fw: dsp-firmware@48000000 {
+			reg = <0x48000000 0x400000>;
+			no-map;
+		};
+	};
+
 	reg_usbvbus: usbvbus {
 		compatible = "regulator-fixed";
 		regulator-name = "usbvbus";
