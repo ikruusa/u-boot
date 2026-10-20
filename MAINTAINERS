@@ -1551,6 +1551,7 @@ F:	arch/riscv/include/asm/arch-sun20i/
 F:	board/sun20i/
 F:	configs/lichee_rv_dock_defconfig
 F:	configs/mangopi_mq_d1s_defconfig
+F:	configs/nezha_defconfig
 F:	drivers/remoteproc/sunxi_dsp_rproc.c
 F:	include/configs/sun20i.h
 
