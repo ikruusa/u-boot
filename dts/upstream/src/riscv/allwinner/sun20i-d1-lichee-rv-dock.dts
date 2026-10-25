@@ -15,6 +15,28 @@
 		ethernet1 = &rtl8723ds;
 	};
 
+	/*
+	 * The HiFi4 firmware links its .text/.data/.bss at 0x48000000
+	 * (ddr1_0_seg, 4 MB), which is inside the SDRAM the kernel would
+	 * otherwise hand out, so the region has to be kept away from it.
+	 *
+	 * It also has to stay clear of the kernel load address (0x40200000,
+	 * about 19 MB with the current Image): U-Boot honours
+	 * /reserved-memory when allocating, so carving this out of the
+	 * kernel's path makes booti fail with "Failed to allocate memory for
+	 * the image".
+	 */
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		dsp_fw: dsp-firmware@48000000 {
+			reg = <0x48000000 0x400000>;
+			no-map;
+		};
+	};
+
 	dmic_codec: dmic-codec {
 		compatible = "dmic-codec";
 		num-channels = <2>;
