@@ -688,8 +688,14 @@ static void mctl_phy_ac_remapping(const dram_para_t *para,
 	debug("DDR efuse: 0x%x\n", fuse);
 	debug("SoC Chip ID: 0x%08x\n", sid_read_soc_chipid());
 
-	/* No remapping needed on T113-s4 with 256MB co-packaged DRAM */
-	if (sid_read_soc_chipid() == SUNXI_CHIPID_T113M4020DC0)
+	/*
+	 * No remapping needed on the SoCs with co-packaged DRAM: the T113-s4
+	 * with its 256MB, and the D1s/F133-A parts, are all wired straight
+	 * through, so the pin remapping tables below do not apply to them.
+	 */
+	if (sid_read_soc_chipid() == SUNXI_CHIPID_T113M4020DC0 ||
+	    sid_read_soc_chipid() == SUNXI_CHIPID_F133A ||
+	    sid_read_soc_chipid() == SUNXI_CHIPID_D1S)
 		return;
 
 	if (para->dram_type == SUNXI_DRAM_TYPE_DDR2) {
@@ -1270,7 +1276,75 @@ static int auto_scan_dram_config(const dram_para_t *para,
 	return 1;
 }
 
-static int init_DRAM(int type, const dram_para_t *para)
+/*
+ * DRAM configurations for SoCs whose DRAM is co-packaged, taken from the
+ * corresponding vendor boot0 configurations. dram_para1 == 0 means that
+ * the auto-scan determines the geometry.
+ */
+static const struct sunxi_dram_co_package co_package_configs[] = {
+	{
+		.chipid		= SUNXI_CHIPID_F133A,
+		.dram_type	= SUNXI_DRAM_TYPE_DDR2,
+		.dram_zq	= 0x007b7bf9,
+		.dram_odt_en	= 0,
+		.dram_mr1	= 0x02,
+		.dram_para1	= 0x000000d2,
+		.dram_tpr0	= 0x00471992,
+		.dram_tpr11	= 0x00030010,
+		.dram_tpr12	= 0x00000035,
+		.dram_tpr13	= 0x34004002,
+	},
+	{
+		.chipid		= SUNXI_CHIPID_D1S,
+		.dram_type	= SUNXI_DRAM_TYPE_DDR2,
+		.dram_zq	= 0x007b7bf9,
+		.dram_odt_en	= 0,
+		.dram_mr1	= 0x02,
+		.dram_para1	= 0x000000d2,
+		.dram_tpr0	= 0x00471992,
+		.dram_tpr11	= 0x00030010,
+		.dram_tpr12	= 0x00000035,
+		.dram_tpr13	= 0x34004002,
+	},
+	{
+		.chipid		= SUNXI_CHIPID_T113S3,
+		.dram_type	= SUNXI_DRAM_TYPE_DDR3,
+		.dram_zq	= 0x007b7a3b,
+		.dram_odt_en	= 0,
+		.dram_mr1	= 0x42,
+		.dram_para1	= 0,
+		.dram_tpr0	= 0x004a2195,
+		.dram_tpr11	= 0x00340000,
+		.dram_tpr12	= 0x00000046,
+		.dram_tpr13	= 0x34000100,
+	},
+	{
+		.chipid		= SUNXI_CHIPID_T113M4020DC0,
+		.dram_type	= SUNXI_DRAM_TYPE_DDR3,
+		.dram_zq	= 0x007b7a3b,
+		.dram_odt_en	= 0,
+		.dram_mr1	= 0x42,
+		.dram_para1	= 0,
+		.dram_tpr0	= 0x004a2195,
+		.dram_tpr11	= 0x00340000,
+		.dram_tpr12	= 0x00000046,
+		.dram_tpr13	= 0x34000100,
+	},
+};
+
+static const struct sunxi_dram_co_package *sunxi_dram_co_package(u32 chipid)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(co_package_configs); i++)
+		if (co_package_configs[i].chipid == chipid)
+			return &co_package_configs[i];
+
+	return NULL;
+}
+
+static int init_DRAM(int type, const dram_para_t *para,
+		     const struct sunxi_dram_co_package *cfg)
 {
 	dram_config_t config = {
 		.dram_para1	= 0x000010d2,
@@ -1278,6 +1352,15 @@ static int init_DRAM(int type, const dram_para_t *para)
 		.dram_tpr13	= CONFIG_DRAM_SUNXI_TPR13,
 	};
 	u32 rc, mem_size_mb;
+
+	/*
+	 * For a co-packaged DRAM the configuration is fixed by the SoC, so
+	 * let the chip entry override the board settings.
+	 */
+	if (cfg) {
+		config.dram_para1 = cfg->dram_para1;
+		config.dram_tpr13 = cfg->dram_tpr13;
+	}
 
 	debug("DRAM BOOT DRIVE INFO: %s\n", "V0.24");
 	debug("DRAM CLK = %d MHz\n", para->dram_clk);
@@ -1307,7 +1390,14 @@ static int init_DRAM(int type, const dram_para_t *para)
 	dram_voltage_set(para);
 
 	/* Set SDRAM controller auto config */
-	if ((config.dram_tpr13 & BIT(0)) == 0) {
+	if (cfg) {
+		/*
+		 * The geometry of a co-packaged DRAM is fixed and known, so
+		 * skip the probe and mark the configuration as complete.
+		 */
+		config.dram_para2 = 0;
+		config.dram_tpr13 |= CO_TPR13_BITS;
+	} else if ((config.dram_tpr13 & BIT(0)) == 0) {
 		if (auto_scan_dram_config(para, &config) == 0) {
 			printf("auto_scan_dram_config() FAILED\n");
 			return 0;
@@ -1412,7 +1502,24 @@ static const dram_para_t para = {
 
 unsigned long sunxi_dram_init(void)
 {
-	return init_DRAM(0, &para) * 1024UL * 1024;
+	const struct sunxi_dram_co_package *cfg;
+	dram_para_t p = para;
+
+	cfg = sunxi_dram_co_package(sid_read_soc_chipid());
+	if (cfg) {
+		debug("SoC chip ID %04x: using the co-packaged DRAM config\n",
+		      cfg->chipid);
+
+		p.dram_type	= cfg->dram_type;
+		p.dram_zq	= cfg->dram_zq;
+		p.dram_odt_en	= cfg->dram_odt_en;
+		p.dram_mr1	= cfg->dram_mr1;
+		p.dram_tpr0	= cfg->dram_tpr0;
+		p.dram_tpr11	= cfg->dram_tpr11;
+		p.dram_tpr12	= cfg->dram_tpr12;
+	}
+
+	return init_DRAM(0, &p, cfg) * 1024UL * 1024;
 };
 
 #ifdef CONFIG_RAM		/* using the driver model */
