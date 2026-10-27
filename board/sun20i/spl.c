@@ -15,8 +15,10 @@
 #include <spl.h>
 #include <sunxi_image.h>
 #include <asm/cache.h>
+#include <asm/csr.h>
 #include <asm/system.h>
 #include <asm/arch/clock.h>
+#include <asm/arch/thead_csr.h>
 #include <cpu.h>
 #include <cpu_func.h>
 #include <dm.h>
@@ -69,6 +71,24 @@ int spl_board_init_f(void)
 	 */
 	icache_enable();
 	dcache_enable();
+
+	/*
+	 * MXSTATUS.MAEE makes the MMU read the T-Head memory type out of
+	 * PTE[63:59] instead of ignoring those bits entirely
+	 * (mmu/rtl/aq_mmu_ptw.v: ptw_ref_pma = cp0_mmu_maee ? pte[63:59]
+	 * : 0).  Linux encodes its non-coherent DMA attributes exactly
+	 * there: pgprot_dmacoherent() becomes pgprot_writecombine() and,
+	 * on a T-HEAD core, _PAGE_NOCACHE is the T-Head encoding
+	 * 00110 (non-cacheable, bufferable) selected through the
+	 * ERRATA_THEAD_MAE alternative.  With MAEE clear those bits do
+	 * nothing, dma_alloc_coherent() keeps returning cacheable
+	 * write-back memory, and since this SoC has no Zicbom there is
+	 * no cache maintenance to fall back on -- drivers then read
+	 * stale descriptors (OHCI reports "frame counter not updating").
+	 * The C906 does not leave this bit set for us, so set it once
+	 * DRAM is up, as the vendor SPL does.
+	 */
+	csr_set(CSR_MXSTATUS, MXSTATUS_MAEE);
 
 	return 0;
 }

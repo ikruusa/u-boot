@@ -12,6 +12,7 @@
 #define CSR_MHINT               0x7c5
 
 #define MXSTATUS_THEADISAEE     BIT(22) /* T-HEAD ISA extensions enable */
+#define MXSTATUS_MAEE           BIT(21) /* MMU honours the PTE memory type */
 #define MXSTATUS_MM             BIT(15) /* misaligned access enable */
 
 #define MHCR_IE                 BIT(0)  /* icache enable */
