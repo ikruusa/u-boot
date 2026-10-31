@@ -41,29 +41,29 @@ enum sunxi_soc_chipid {
  */
 typedef struct dram_para {
 	/* normal configuration */
-	const u32	dram_clk;
-	const u32	dram_type;
-	const u32	dram_zq;
-	const u32	dram_odt_en;
+	u32	dram_clk;
+	u32	dram_type;
+	u32	dram_zq;
+	u32	dram_odt_en;
 
 	/* timing configuration */
-	const u32	dram_mr0;
-	const u32	dram_mr1;
-	const u32	dram_mr2;
-	const u32	dram_mr3;
-	const u32	dram_tpr0;	//DRAMTMG0
-	const u32	dram_tpr1;	//DRAMTMG1
-	const u32	dram_tpr2;	//DRAMTMG2
-	const u32	dram_tpr3;	//DRAMTMG3
-	const u32	dram_tpr4;	//DRAMTMG4
-	const u32	dram_tpr5;	//DRAMTMG5
-	const u32	dram_tpr6;	//DRAMTMG8
-	const u32	dram_tpr7;
-	const u32	dram_tpr8;
-	const u32	dram_tpr9;
-	const u32	dram_tpr10;
-	const u32	dram_tpr11;
-	const u32	dram_tpr12;
+	u32	dram_mr0;
+	u32	dram_mr1;
+	u32	dram_mr2;
+	u32	dram_mr3;
+	u32	dram_tpr0;	//DRAMTMG0
+	u32	dram_tpr1;	//DRAMTMG1
+	u32	dram_tpr2;	//DRAMTMG2
+	u32	dram_tpr3;	//DRAMTMG3
+	u32	dram_tpr4;	//DRAMTMG4
+	u32	dram_tpr5;	//DRAMTMG5
+	u32	dram_tpr6;	//DRAMTMG8
+	u32	dram_tpr7;
+	u32	dram_tpr8;
+	u32	dram_tpr9;
+	u32	dram_tpr10;
+	u32	dram_tpr11;
+	u32	dram_tpr12;
 } dram_para_t;
 
 typedef struct dram_config {
@@ -73,6 +73,37 @@ typedef struct dram_config {
 	/* contains a bitfield of DRAM setup settings */
 	u32	dram_tpr13;
 } dram_config_t;
+
+/*
+ * SoCs with co-packaged DRAM have the DRAM die in the same package, so
+ * the DRAM configuration is fixed by the SoC itself. The driver picks
+ * the matching entry by the chip ID read from the SID block, and no
+ * board level settings are needed for such a SoC.
+ *
+ * The DRAM clock is deliberately not part of this table: the timing
+ * values are expressed in controller clock cycles and are calculated at
+ * compile time, so the clock rate stays a Kconfig setting, exactly as it
+ * is for the boards with a discrete DRAM chip.
+ */
+struct sunxi_dram_co_package {
+	u16	chipid;
+	u32	dram_type;
+	u32	dram_zq;
+	u32	dram_odt_en;
+	u32	dram_mr1;
+	u32	dram_para1;
+	u32	dram_tpr0;
+	u32	dram_tpr11;
+	u32	dram_tpr12;
+	u32	dram_tpr13;
+};
+
+/*
+ * The TPR13 bits that auto_scan_dram_config() sets once it has measured the
+ * geometry. Setting them up front marks the configuration as fully described
+ * by the chip entry, so the probe is skipped.
+ */
+#define CO_TPR13_BITS	(BIT(14) | BIT(13) | BIT(1) | BIT(0))
 
 static inline int ns_to_t(int nanoseconds)
 {
