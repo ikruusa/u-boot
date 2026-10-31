@@ -14,9 +14,13 @@
 #include <ram.h>
 #include <spl.h>
 #include <sunxi_image.h>
+#include <asm/cache.h>
+#include <asm/csr.h>
 #include <asm/system.h>
 #include <asm/arch/clock.h>
+#include <asm/arch/thead_csr.h>
 #include <cpu.h>
+#include <cpu_func.h>
 #include <dm.h>
 #include <init.h>
 
@@ -58,6 +62,27 @@ int spl_board_init_f(void)
 		return ret;
 	}
 
+	/*
+	 * The C906 leaves reset with both caches disabled (MHCR.IE and
+	 * MHCR.DE are 0) and nothing else in the boot chain turns them on.
+	 * Enable them here, i.e. only once DRAM is usable: with the D-cache
+	 * on, the DRAM controller's training tests observe their own cached
+	 * writes and fail.
+	 */
+	icache_enable();
+	dcache_enable();
+
+	/*
+	 * MXSTATUS.MAEE makes the MMU take the memory type from PTE[63:59]
+	 * instead of ignoring those bits.  With it clear every mapping is
+	 * cached, so the OS cannot mark its DMA memory non-cacheable, and this
+	 * SoC has no Zicbom to fall back on: drivers then read stale
+	 * descriptors (OHCI reports "frame counter not updating").  The C906
+	 * does not leave the bit set, so set it once DRAM is up, as the vendor
+	 * SPL does.
+	 */
+	csr_set(CSR_MXSTATUS, MXSTATUS_MAEE);
+
 	return 0;
 }
 
@@ -78,6 +103,14 @@ void spl_perform_board_fixups(struct spl_image_info *spl_image)
 	ret = fdt_fixup_memory(spl_image->fdt_addr, info.base, info.size);
 	if (ret)
 		panic("Failed to update DTB");
+
+	/*
+	 * The D-cache is enabled by now, so the image we just loaded and the
+	 * DTB we just patched may still be dirty in it. The next stage is
+	 * fetched through the I-cache, which does not see dirty D-cache
+	 * lines, so push everything out before handing over.
+	 */
+	flush_dcache_all();
 }
 
 #ifdef CONFIG_SPL_LOAD_FIT
