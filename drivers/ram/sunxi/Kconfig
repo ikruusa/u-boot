@@ -12,6 +12,12 @@ config DRAM_SUNXI_ODT_EN
 	help
 	  ODT EN value from vendor DRAM settings.
 
+config DRAM_SUNXI_MR1
+	hex "DRAM MR1 parameter"
+	default 0x42
+	help
+	  DRAM mode register 1 value from vendor DRAM settings.
+
 config DRAM_SUNXI_TPR0
 	hex "DRAM TPR0 parameter"
 	help
