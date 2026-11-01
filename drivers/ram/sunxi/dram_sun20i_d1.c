@@ -690,8 +690,13 @@ static void mctl_phy_ac_remapping(const dram_para_t *para,
 	debug("DDR efuse: 0x%x\n", fuse);
 	debug("SoC Chip ID: 0x%08x\n", sid_read_soc_chipid());
 
-	/* No remapping needed on T113-s4 with 256MB co-packaged DRAM */
-	if (sid_read_soc_chipid() == SUNXI_CHIPID_T113M4020DC0)
+	/*
+	 * No remapping needed on the chips with the DRAM die in the package:
+	 * the T113-s4 with 256MB, and the D1s and F133-A.
+	 */
+	if (sid_read_soc_chipid() == SUNXI_CHIPID_T113M4020DC0 ||
+	    sid_read_soc_chipid() == SUNXI_CHIPID_D1S ||
+	    sid_read_soc_chipid() == SUNXI_CHIPID_F133A)
 		return;
 
 	if (para->dram_type == SUNXI_DRAM_TYPE_DDR2) {
