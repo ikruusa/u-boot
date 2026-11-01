@@ -1085,7 +1085,7 @@ static uint32_t get_payload(bool odd, unsigned long int ptr)
 
 static int auto_scan_dram_size(const dram_para_t *para, dram_config_t *config)
 {
-	unsigned int rval, i, j, rank, maxrank, offs;
+	unsigned int rval, i, j, banks, rank, maxrank, offs;
 	unsigned int shft;
 	unsigned long ptr, chk;
 	u8 __iomem *mc_work_mode;
@@ -1139,25 +1139,32 @@ static int auto_scan_dram_size(const dram_para_t *para, dram_config_t *config)
 		clrsetbits_le32(mc_work_mode, 0xffc, 0x6a4);
 		udelay(1);
 
-		// Test if bit A23 is BA2 or mirror XXX A22?
-		chk = CFG_SYS_SDRAM_BASE + (1U << 22);
+		/*
+		 * Probe for a third bank address line. The bank mode above
+		 * leaves a nine bit column field, so the bank lines sit at
+		 * A9-A11 and BA2 is address bit 11: a part with only four
+		 * banks does not decode it, and mirrors the pattern written
+		 * at the start of the rank. Testing a row line instead (as
+		 * this used to, at A22) always misses the mirror on a four
+		 * bank part and reports eight banks.
+		 */
+		chk = CFG_SYS_SDRAM_BASE + (1U << 11);
 		ptr = CFG_SYS_SDRAM_BASE;
-		for (i = 0, j = 0; i < 64; i++) {
-			if (readl((void __iomem *)chk) != get_payload(i & 1, ptr)) {
-				j = 1;
+		for (j = 0; j < 64; j++) {
+			if (readl((void __iomem *)chk) != get_payload(j & 0x1, ptr))
 				break;
-			}
 			ptr += 4;
 			chk += 4;
 		}
+		banks = (j == 64) ? 0 : 1;
 
-		debug("rank %d bank = %d\n", rank, (j + 1) << 2); /* 4 or 8 */
+		debug("rank %d bank = %d\n", rank, (banks + 1) << 2); /* 4 or 8 */
 
 		/* Store banks in para 1 */
 		shft = 12 + offs;
 		rval = config->dram_para1;
 		rval &= ~(0xf << shft);
-		rval |= j << shft;
+		rval |= banks << shft;
 		config->dram_para1 = rval;
 
 		if (rank == 1)		/* Set page mode for rank0 */
